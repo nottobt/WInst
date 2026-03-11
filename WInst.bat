@@ -180,8 +180,8 @@ if %errorlevel% equ 0 (
 if /i "%CONFIRM%"=="YES" (
     pause <nul
 ) else (
-    echo [%STAMP%] The user has chosen option 3.>> WInstLOGS.log
-    timeout 3 /NOBREAK <nul
+    echo [%STAMP%] The user has chosen option 3 >> WInstLOGS.log
+    timeout 3 /NOBREAK <nul 
     cls
     goto INSTALLACTION3
 )    
@@ -209,11 +209,18 @@ if "%CONF1%" neq "FORMAT" (
     echo The user exited before executing the step: Step 1.
     echo The program will exit.
     pause
+    if /i "%CONFIRM%" neq "YES" (
+        echo [%STAMP%] The user had chosen to not format, thus marking the operation unfinished. WInst will exit. >> WInstLOGS.log
+    )
     goto OPTION1
-)
+)    
 cls
 echo Partitioning drive... Please be patient, this will take a long time as formatting a drive takes a long amount of time.
 pause
+
+if /i "%CONFIRM%" neq "YES" (
+    echo [%STAMP%] The user has chosen to format, Formatting will begin shortly.
+)
 
 if "%BOOT_MODE%"=="UEFI" (
 
@@ -235,7 +242,9 @@ if "%BOOT_MODE%"=="UEFI" (
     echo format quick fs=ntfs label="Windows" >> WInstTEMP.bat
     echo assign letter="W" >> WInstTEMP.bat
     echo exit >> WInstTEMP.bat
-
+    if /i "%CONFIRM%" neq "YES" (
+        echo [%STAMP%] WInst has finished generating critical files for Step 3. Type: UEFI/GPT partition scheme. >> WInstLOGS.log
+    )   
 ) else (
 
     :: DISKPART (-- LEGACY --)
@@ -250,12 +259,17 @@ if "%BOOT_MODE%"=="UEFI" (
     echo format quick fs=ntfs label="Windows" >> WInstTEMP.bat
     echo assign letter="W" >> WInstTEMP.bat
     echo exit >> WInstTEMP.bat
-
+    if /i "%CONFIRM%" neq "YES" (
+        echo [%STAMP%] WInst has finished generating critical files for Step 3. Type: Legacy BIOS/MBR partition scheme. >> WInstLOGS.log
+    )   
 )
 :: DISKPART SCRIPT Launch
 echo Step 2/2: Launching .bat script file... (MAY TAKE A LONG TIME)
 diskpart /s X:\Windows\Temp\WInstTEMP.bat
 cls
+if /i "%CONFIRM%" neq "YES" (
+    echo [%STAMP%] WInst has finished partitioning the drive. >> WInstLOGS.log
+)   
 
 :: Part 3: Windows IMG Installation
 :WIMAPPLY
@@ -270,23 +284,48 @@ where /r D:\ "install.wim"
 where /r X:\ "install.wim"
 if errorlevel neq 0 (
     echo File not found. You'll have to put the file's directory and name manually.
-    goto MANINPUT 
+        if /i "%CONFIRM%" neq "YES" (
+        echo [%STAMP%] .wim or .esd files not found. The user will have to input files manually. >> WInstLOGS.log
+    )   
+    :maninput
+    echo AS the file wasn't found. you will have ot input the install.esd or .wim file manually.
+    set /p maninput="File Directory: "
+    goto INDEXINPUT
 ) else (
     echo Installation file found.
     echo Going to next step...
     timeout 2 /NOBREAK
+    if /i "%CONFIRM%" neq "YES" (
+        echo [%STAMP%] Installation file found. >> WInstLOGS.log
+    )   
     goto INDEXINPUT
 )
+
 :INDEXINPUT
+if defined %maninput% (
+    echo Already manually inputted. Moving to next step...
+    timeout 2 /NOBREAK <nul
+)
 set /p IMGDIR="Image File: "
 cls
 echo If it is a valid .esd or .wim file, DISM will identify all the versions. WInst will allow you to choose between multiple versions of Windows.
+if errorlevel neq 0 (
+    echo File not found. Please input again.
+    goto :maninput
+) else (
+    echo File found. Proceeding...
+)    
 dism /Get-ImageInfo /ImageFile:%IMGDIR%
+:INDEX
 set /p INDEX="Index: "
 if %errorlevel% neq 0 (
     echo Index not found.
     echo Try again.
-    goto INDEXINPUT
+    if /i "%CONFIRM%" neq "YES" (
+        echo [%STAMP%] WInst didn't find the index file as "valid". >> WInstLOGS.log
+    )    
+    echo you will have to reinput the manual directory of the windows installation media file.
+    timeout 2 /NOBREAK <nul
 ) else (
     echo Index found.
     echo Proceeding...
@@ -298,6 +337,10 @@ echo Extracting contents
 echo Part 3: 1/1: Using DISM to apply the files from the .esd file...
 
 dism /Apply-Image /ImageFile:%IMGDIR% /Index:%INDEX% /ApplyDir:W:\
+
+if /i "%CONFIRM%" neq "YES" (
+    echo [%STAMP%] WInst has extracted the contents. If dism returned a error, it couldn't find the file or it ran into a problem. >> WInstLOGS.log
+)    
 cls
 :: Part 4: bcdboot EFI initalisation
 :BCDBTINIT
@@ -305,11 +348,16 @@ echo This part will initalise the EFI partition. This will take a short amount o
 pause
 bcdboot W:\Windows /s S: /f ALL
 cls
+if /i "%CONFIRM%" neq "YES" (
+    echo [%STAMP%] WInst has initalised critical boot configuration files. >> WInstLOGS.log
+)    
 
 :: Part 5: Installation completion
 :SUMMARY
 echo Installation complete.
-
+if /i "%CONFIRM%" neq "YES" (
+   echo [%STAMP%] WInst completed installation successfully. >> WInstLOGS
+)
 echo Summary:
 
 echo  --------------------- PARITIONING -----------------------
