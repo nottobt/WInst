@@ -1,9 +1,9 @@
 @echo off
 :: Windows Installation Executable
-:: Beta Release 0.4.1b
+:: Beta Release 0.5b
 :: By NotToBT - The single developer
 
-:: NOTE TO DEVELOPER: Logging is unfinished. Finish the ASCII improvements (e.g ---------) and than proceed to logging.
+:: NOTE TO DEVELOPER: Finish ASCII improvements.
 set TEMPDIR="X:\Windows\Temp"
 set ACTION=0
 set BOOT_MODE=0
@@ -27,25 +27,21 @@ echo Timestamp: %Stamp%
 title WInst - V0.4.1b
 
 :: Configure Logging
-//
 echo [%Stamp%] Logging System: Logging has started. > %TEMPDIR%\WinstLOGS.log
 echo No logging? (YES/NO)
 set /p CONFIRM="Confirmation: "
-if /i "%CONFIRM%"=="YES" (
-    echo The program will only log errors.
-    pause
-    goto INTRO
-) else (
-    echo OK, Everything will be logged.
-    pause
-    goto INTRO
+if /i "%CONFIRM%" neq "YES" (
+    echo Logging will be disabled.
+    timeout 2 /NOBREAK <nul
+    goto TANDC
 )
-//
-:: ------------------------------------------------------------------ UNFINISHED --------------------------------------------------------------------------------------- (Marked with //)
+echo Logging will be enabled.
+timeout 2 /NOBREAK <nul
+goto TANDC
 
-@echo off
+
 :: WInst - Windows Installation Executable
-:: Copyright (C) 2026 NotToBT
+:: Copyleft 2026 NotToBT
 ::
 :: This program is free software; you can redistribute it and/or modify
 :: it under the terms of the GNU General Public License as published by
@@ -63,6 +59,7 @@ if /i "%CONFIRM%"=="YES" (
 ::
 
 cls
+:TANDC
 echo Read the terms, conditions and changelogs before running the program.
 echo.
 echo Welcome to Windows Installation Executable
@@ -84,12 +81,18 @@ echo     - Step 3
 echo            - Step 3 installs the system without overwriting user data.
 echo            - Bug fixes
 echo 0.4.1 - Major bug fixes
-echo ---------------------------------------- IN DEVELOPMENT -------------------------------------------------
 echo 0.5 - Logging
 echo     - Minor bug fixes -
 echo                       - Syntax errors in :OPTION
+echo                       - Logging
+echo                                - Fixed file extension (.txt > .log)
+echo.
+echo ---------------------------------------- IN DEVELOPMENT -------------------------------------------------
+echo.
 echo Major improvements -
 echo                    - Major UI Improvements 
+echo.
+echo Step 4
 echo ---------------------------------------------------------------------------------------------------------
 echo MINOR UPDATES
 echo 0.2 - Added file finders in Step 3
@@ -110,6 +113,9 @@ cls
 :OPTION
 echo Options:
 echo ----------------------------------------------------------------------------------------------------
+echo.
+echo Windows Installation WIzard (WInst) Version 0.5
+echo.
 echo 1. Install Windows
 echo.
 echo 2. Exit
@@ -117,6 +123,7 @@ echo.
 echo 3. Install Windows without deleting system files
 echo.
 echo 4. In development
+echo.
 echo ----------------------------------------------------------------------------------------------------
 echo.
 set /p ACTION="What action would you choose? "
@@ -158,6 +165,7 @@ if "%ACTION%"=="3" (
     timeout 3 /NOBREAK <nul
     cls
     goto INSTALLACTION3
+    cls
     )
 )       
 echo Choose an option.
@@ -356,7 +364,7 @@ if /i "%CONFIRM%" neq "YES" (
 :SUMMARY
 echo Installation complete.
 if /i "%CONFIRM%" neq "YES" (
-   echo [%STAMP%] WInst completed installation successfully. >> WInstLOGS
+   echo [%STAMP%] WInst completed installation successfully. >> WInstLOGS.log
 )
 echo Summary:
 
@@ -404,6 +412,9 @@ if %errorlevel% equ 0 (
 
 echo The BIOS mode is %BOOT_MODE%.
 echo The program is inserting the boot mode to its database...
+if /i "%CONFIRM%" neq "YES" (
+   echo [%STAMP%] WInst has detected the syetem firmware type as %BOOT_MODE%. >> WInstLOGS.log
+)
 timeout 3 /NOBREAK <nul
 goto PARTCRTACTION3
 
@@ -415,17 +426,8 @@ echo Making partitions are easy, if you know how.
 echo Please insert your disk here:
 diskpart list disk
 set /p DISK="Disk: "
-echo ALL DATA WILL BE DELETED WHEN PARTITIONING. Are you sure?
-echo Type "FORMAT" to partition the drive.
-set /p CONF1="Confirmation: "
-if /i "%CONF1%" neq "FORMAT" (
-    echo If you don't format, The program will exit profusely.
-    pause
-    cls
-    echo The user exited before executing the step: Step 1.
-    echo The program will exit.
-    pause
-    goto OPTION1
+if /i "%CONFIRM%" neq "YES" (
+   echo [%STAMP%] The user has selected Disk %DISK%. >> WInstLOGS.log
 )
 
 echo The device will continue partitioning.
@@ -455,16 +457,20 @@ if (%BOOT_MODE%)=="UEFI" (
     echo assign letter S >> WInstTEMP.bat
     echo exit >> WInstTEMP.bat
 )
+
+if /i "%CONFIRM%" neq "YES" (
+   echo [%STAMP%] WInst has finished partitioning the system boot drive. >> WInstLOGS.log
+)
 echo Step 2/2: Executing .bat file
 diskpart /s X:\Windows\Temp\WInstTEMP.bat
 
 echo Operation complete.
 pause
 cls
-goto IMGAPPLY
+goto WIMAPPLY2
 
 :: Part 3: Windows Image Application
-:IMGAPPLY
+:WIMAPPLY2
 echo Part 3: Windows IMG Installation
 echo If you know the place where Windows (the .wim or .esd ones) You should put it here.
 echo You NEED to put the install.esd in the end of the file. (Example: X:\Example\Example)
@@ -476,50 +482,53 @@ where /r D:\ "install.wim"
 where /r X:\ "install.wim"
 if errorlevel neq 0 (
     echo File not found. You'll have to put the file's directory and name manually.
-    goto MANINPUT 
+        if /i "%CONFIRM%" neq "YES" (
+        echo [%STAMP%] .wim or .esd files not found. The user will have to input files manually. >> WInstLOGS.log
+    )   
+    :maninput
+    echo AS the file wasn't found. you will have ot input the install.esd or .wim file manually.
+    set /p maninput="File Directory: "
+    goto INDEXINPUT
 ) else (
     echo Installation file found.
     echo Going to next step...
     timeout 2 /NOBREAK
+    if /i "%CONFIRM%" neq "YES" (
+        echo [%STAMP%] Installation file found. >> WInstLOGS.log
+    )   
     goto INDEXINPUT
 )
-:MANINPUT
-set /p IMGDIR="Image File: "
-if exist %IMGDIR% (
-    echo Image found.
-    echo WInst will continue.
-    pause
-    cls
-) else (
-    echo Image not found.
-    echo Try again.
-    pause
-    cls
-    goto MANINPUT
-)
-cls
 
 :INDEXINPUT
+if defined %maninput% (
+    echo Already manually inputted. Moving to next step...
+    timeout 2 /NOBREAK <nul
+)
+set /p IMGDIR="Image File: "
+cls
 echo If it is a valid .esd or .wim file, DISM will identify all the versions. WInst will allow you to choose between multiple versions of Windows.
+if errorlevel neq 0 (
+    echo File not found. Please input again.
+    goto :maninput
+) else (
+    echo File found. Proceeding...
+)    
 dism /Get-ImageInfo /ImageFile:%IMGDIR%
+:INDEX
 set /p INDEX="Index: "
 if %errorlevel% neq 0 (
     echo Index not found.
     echo Try again.
-    goto INDEXINPUT
+    if /i "%CONFIRM%" neq "YES" (
+        echo [%STAMP%] WInst didn't find the index file as "valid". >> WInstLOGS.log
+    )    
+    echo you will have to reinput the manual directory of the windows installation media file.
+    timeout 2 /NOBREAK <nul
 ) else (
     echo Index found.
     echo Proceeding...
-    goto DISMPROC
+    timeout 2 /NOBREAK <nul
 )
-cls
-:DISMPROC
-echo You will have to input the Primary Partition (The partition where Windows files reside)
-echo Put the volume as ONE LETTER ONLY. (e.g C)
-set /p MANPART="Partition: "
-echo WInst will now use DISM to apply the install.wim or .esd image. DO not terminate the program during this Operation as it could corrupt your system.
-pause
-cls
 
 dism /Apply-Image /ImageFile:%IMGDIR% /Index:%INDEX% /ApplyDir:%MANPART%:\
 echo Operation complete.
@@ -530,13 +539,18 @@ cls
 :BCDBTINIT
 echo This part will initalise the EFI partition. This will take a short amount of time.
 pause
-bcdboot %MANPART%:\Windows /s S: /f ALL
+bcdboot W:\Windows /s S: /f ALL
 cls
+if /i "%CONFIRM%" neq "YES" (
+    echo [%STAMP%] WInst has initalised critical boot configuration files. >> WInstLOGS.log
+)    
 
 :: Part 5: Installation completion
 :SUMMARY
 echo Installation complete.
-
+if /i "%CONFIRM%" neq "YES" (
+    echo [%STAMP%] WInst has finished installation. >> WInstLOGS.log
+)    
 echo Summary:
 
 echo  --------------------- PARITIONING -----------------------
