@@ -2,6 +2,9 @@
 :: Windows Installation Executable
 :: Beta Release 0.5b
 :: By NotToBT - The single developer
+:: Source code released at https://github.com/nottobt/WInst
+:: Licensed under GPL v2.0
+:: Developer's copy
 
 :: NOTE TO DEVELOPER: Finish ASCII improvements.
 set TEMPDIR="X:\Windows\Temp"
@@ -11,6 +14,7 @@ set DISK=0
 set CONF1=0
 set IMGDIR=0
 set INDEX=0
+set MANINPUT=0
 
 :: Pre-initalisation
 
@@ -39,7 +43,6 @@ echo Logging will be enabled.
 timeout 2 /NOBREAK <nul
 goto TANDC
 
-
 :: WInst - Windows Installation Executable
 :: Copyleft 2026 NotToBT
 ::
@@ -57,6 +60,27 @@ goto TANDC
 :: with this program; if not, write to the Free Software Foundation, Inc.,
 :: 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 ::
+
+for /f "tokens=3" %%i in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control" /v SystemStartOptions 2^>nul') do set "bootOpts=%%i"
+echo %bootOpts% | find /i "MININT" >nul 2>&1
+if %errorlevel% equ 0 (
+    echo WInst has detected that the user is currently operating this program in Windows PE.
+    if /i "%CONFIRM%" neq "YES" (
+        echo [%STAMP%] WInst has detected that the user is currently operating this program in Windows PE. >> WInstLOGS.log
+    )
+    echo The program will contiue shortly...
+    timeout 2 /NOBREAK <nul
+    cls
+    goto TANDC
+) else (
+    echo WInst has detected that the user is currently operating this program in the full version of Windows.
+    if /i "%CONFIRM%" neq "YES" (
+        echo [%STAMP%] WInst has detected that the user is currently operating this program in the full version of Windows. >> WInstLOGS.log
+    )
+    echo The program will exit in a few moments, as WInst is only intended for use in the Windows PE Environment.
+    timeout 6 /NOBREAK <nul
+    exit /b
+)
 
 cls
 :TANDC
@@ -101,8 +125,10 @@ echo 0.3 - Added Terms and Conditions and changelogs
 echo Bug fixes
 echo 0.3.2 - Fixed a bug in the "FORMAT" confirmation that proceeded even if the user typed something else rather than FORMAT.
 echo       - Improvements - Improved GUI a bit
+echo 0.5.1 - Added a precaution before the terms and conditions that prevents the user from running the program in Full Windows.
+echo       - Major bug fixes
 echo Press any key to continue.
-if /i "%CONFIRM%"=="YES" (
+if /i "%CONFIRM%" neq "YES" (
     pause <nul
 ) else (
     echo [%STAMP%] The user has accepted the terms and conditions. >> WInstLOGS.log
@@ -129,7 +155,7 @@ echo.
 set /p ACTION="What action would you choose? "
 if "%ACTION%"=="1" (
     echo Installation process will start in a few seconds. Please stay put.
-    if /i "%CONFIRM%"=="YES" (
+    if /i "%CONFIRM%" neq "YES" (
     pause <nul
     cls
 ) else (
@@ -144,7 +170,7 @@ if "%ACTION%"=="2" (
     echo Exiting...
     timeout 1 /NOBREAK <nul
     echo Removing processes...
-    if /i "%CONFIRM%"=="YES" (
+    if /i "%CONFIRM%" neq "YES" (
         pause <nul
         exit /b
     ) else (
@@ -156,7 +182,7 @@ if "%ACTION%"=="2" (
 if "%ACTION%"=="3" (
     echo Installation process will start in a bit...
     echo Please be patient. WInst is Generating crucial files.
-    if /i "%CONFIRM%"=="YES" (
+    if /i "%CONFIRM%" neq "YES" (
        timeout 3 /NOBREAK <nul
        cls 
        goto INSTALLACTION3
@@ -185,7 +211,7 @@ if %errorlevel% equ 0 (
     set BOOT_MODE=BIOS
 )
 
-if /i "%CONFIRM%"=="YES" (
+if /i "%CONFIRM%" neq "YES" (
     pause <nul
 ) else (
     echo [%STAMP%] The user has chosen option 3 >> WInstLOGS.log
@@ -235,45 +261,52 @@ if "%BOOT_MODE%"=="UEFI" (
 :: DISKPART (-- UEFI --)
     echo Step 2: 1/2 Generating .bat script file...
     cd %TEMPDIR%
-    echo select disk %DISK% > WInstTEMP.bat
-    echo clean >> WInstTEMP.bat
-    echo convert gpt >> WInstTEMP.bat
-    echo create partition primary size=450 >> WInstTEMP.bat
-    echo format quick fs=ntfs label="Recovery" >> WInstTEMP.bat
-    echo set id="de94bba4-06d1-4d40-a16a-bfd50179d6ac" >> WInstTEMP.bat
-    echo gpt attributes=0x8000000000000001 >> WInstTEMP.bat
-    echo create partition efi size=100 >> WInstTEMP.bat
-    echo format quick fs=fat32 label="System" >> WInstTEMP.bat
-    echo assign letter="S" >> WInstTEMP.bat
-    echo create partition msr size=16 >> WInstTEMP.bat
-    echo create partition primary >> WInstTEMP.bat
-    echo format quick fs=ntfs label="Windows" >> WInstTEMP.bat
-    echo assign letter="W" >> WInstTEMP.bat
-    echo exit >> WInstTEMP.bat
+    echo select disk %DISK% > WInstTEMP.txt
+    echo clean >> WInstTEMP.txt
+    echo convert gpt >> WInstTEMP.txt
+    echo create partition primary size=450 >> WInstTEMP.txt
+    echo format quick fs=ntfs label="Recovery" >> WInstTEMP.txt
+    echo set id="de94bba4-06d1-4d40-a16a-bfd50179d6ac" >> WInstTEMP.txt
+    echo gpt attributes=0x8000000000000001 >> WInstTEMP.txt
+    echo create partition efi size=100 >> WInstTEMP.txt
+    echo format quick fs=fat32 label="System" >> WInstTEMP.txt
+    echo assign letter="S" >> WInstTEMP.txt
+    echo create partition msr size=16 >> WInstTEMP.txt
+    echo create partition primary >> WInstTEMP.txt
+    echo format quick fs=ntfs label="Windows" >> WInstTEMP.txt
+    echo assign letter="W" >> WInstTEMP.txt
+    echo exit >> WInstTEMP.txt
     if /i "%CONFIRM%" neq "YES" (
         echo [%STAMP%] WInst has finished generating critical files for Step 3. Type: UEFI/GPT partition scheme. >> WInstLOGS.log
     )   
 ) else (
 
     :: DISKPART (-- LEGACY --)
-    echo select disk %DISK% > WInstTEMP.bat
-    echo clean >> WInstTEMP.bat
-    echo convert mbr >> WInstTEMP.bat
-    echo create partition primary size=100 >> WInstTEMP.bat
-    echo format quick fs=ntfs label="System" >> WInstTEMP.bat
-    echo active >> WInstTEMP.bat
-    echo assign letter="S" >> WInstTEMP.bat
-    echo create partition primary >> WInstTEMP.bat
-    echo format quick fs=ntfs label="Windows" >> WInstTEMP.bat
-    echo assign letter="W" >> WInstTEMP.bat
-    echo exit >> WInstTEMP.bat
+    echo select disk %DISK% > WInstTEMP.txt
+    echo clean >> WInstTEMP.txt
+    echo convert mbr >> WInstTEMP.txt
+    echo create partition primary size=100 >> WInstTEMP.txt
+    echo format quick fs=ntfs label="System" >> WInstTEMP.txt
+    echo active >> WInstTEMP.txt
+    echo assign letter="S" >> WInstTEMP.txt
+    echo create partition primary >> WInstTEMP.txt
+    echo format quick fs=ntfs label="Windows" >> WInstTEMP.txt
+    echo assign letter="W" >> WInstTEMP.txt
+    echo exit >> WInstTEMP.txt
     if /i "%CONFIRM%" neq "YES" (
         echo [%STAMP%] WInst has finished generating critical files for Step 3. Type: Legacy BIOS/MBR partition scheme. >> WInstLOGS.log
     )   
 )
 :: DISKPART SCRIPT Launch
 echo Step 2/2: Launching .bat script file... (MAY TAKE A LONG TIME)
-diskpart /s X:\Windows\Temp\WInstTEMP.bat
+diskpart /s X:\Windows\Temp\WInstTEMP.txt
+if %errorlevel% neq 0 (
+    echo Disk is non-existent.
+    echo Please reinput disk bumbers again. 
+    echo Part 2 will restart.
+    timeout 2 /NOBREAK <nul
+    goto PARTCRT
+)
 cls
 if /i "%CONFIRM%" neq "YES" (
     echo [%STAMP%] WInst has finished partitioning the drive. >> WInstLOGS.log
@@ -441,10 +474,10 @@ if (%BOOT_MODE%)=="UEFI" (
     echo WInst will use the selected volume as a EFI partition.
     pause    
     echo Step 1/2: The program will wipe ONLY the EFI partitions. The other partitions will stay untouched until later.
-    echo sel vol %VOLUME% > WInstTEMP.bat
-    echo format fs=fat32 quick label="System" >> WInstTEMP.bat
-    echo assign letter S >> WInstTEMP.bat
-    echo exit >> WInstTEMP.bat
+    echo sel vol %VOLUME% > WInstTEMP.txt
+    echo format fs=fat32 quick label="System" >> WInstTEMP.txt
+    echo assign letter S >> WInstTEMP.txt
+    echo exit >> WInstTEMP.txt
 ) else (
    echo Select Volume:
     diskpart list Volume
@@ -452,17 +485,17 @@ if (%BOOT_MODE%)=="UEFI" (
     echo WInst will use the selected volume as a EFI partition.
     pause   
     echo Step 1/2: The program will wipe ONLY the EFI partitions. The other partitions will stay untouched until later.    
-    echo sel vol %VOLUME% > WInstTEMP.bat
-    echo format fs=ntfs quick label="System" >> WInstTEMP.bat
-    echo assign letter S >> WInstTEMP.bat
-    echo exit >> WInstTEMP.bat
+    echo sel vol %VOLUME% > WInstTEMP.txt
+    echo format fs=ntfs quick label="System" >> WInstTEMP.txt
+    echo assign letter S >> WInstTEMP.txt
+    echo exit >> WInstTEMP.txt
 )
 
 if /i "%CONFIRM%" neq "YES" (
    echo [%STAMP%] WInst has finished partitioning the system boot drive. >> WInstLOGS.log
 )
 echo Step 2/2: Executing .bat file
-diskpart /s X:\Windows\Temp\WInstTEMP.bat
+diskpart /s X:\Windows\Temp\WInstTEMP.txt
 
 echo Operation complete.
 pause
@@ -530,7 +563,7 @@ if %errorlevel% neq 0 (
     timeout 2 /NOBREAK <nul
 )
 
-dism /Apply-Image /ImageFile:%IMGDIR% /Index:%INDEX% /ApplyDir:%MANPART%:\
+dism /Apply-Image /ImageFile:%IMGDIR% /Index:%INDEX% /ApplyDir:W:\
 echo Operation complete.
 pause
 cls
