@@ -26,12 +26,13 @@ set Sec=%TIME:~6,2%
 
 set Stamp="%YYYY%/%MM%/%DD%_%HH%%Min%%Sec%"
 echo Timestamp: %Stamp%
+cls
 
 title WInst - V0.4.1b
 
 :: Configure Logging
 echo [%Stamp%] Logging System: Logging has started. > %TEMPDIR%\WinstLOGS.log
-echo No logging? (YES/NO)
+echo No logging? (YES/NO)   
 set /p CONFIRM="Confirmation: "
 if /i "%CONFIRM%" neq "YES" (
     echo Logging will be disabled.
@@ -60,6 +61,7 @@ goto TANDC
 :: 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 ::
 
+:: Find if user is in WinPE or normal Windows
 for /f "tokens=3" %%i in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control" /v SystemStartOptions 2^>nul') do set "bootOpts=%%i"
 echo %bootOpts% | find /i "MININT" >nul 2>&1
 if %errorlevel% equ 0 (
@@ -94,6 +96,10 @@ echo WARNING: Do not use this program for destructive purposes. This is only for
 echo 1. The steps will reinstall your system. By reading this, you should know that using this program without proper knowledge may destroy your system if used incorrectly.
 echo 2. During step 2, the user shall not terminate the system until the process is finished. If so, the system may be inopreateable and may be destroyed.
 echo.
+echo ----------------------------------------------------------------------------------------------
+echo Finished reading?
+pause
+cls
 echo ------------------------------------- CHANGELOGS ----------------------------------------
 echo Feb 2026 UPDATES
 echo 0.1 - BETA version released
@@ -124,6 +130,7 @@ echo 0.3.2 - Fixed a bug in the "FORMAT" confirmation that proceeded even if the
 echo       - Improvements - Improved GUI a bit
 echo 0.5.1 - Added a precaution before the terms and conditions that prevents the user from running the program in Full Windows.
 echo       - Major bug fixes
+echo 0.5.2 - Minor syntax errors fixed
 echo Press any key to continue.
 if /i "%CONFIRM%" neq "YES" (
     pause <nul
@@ -530,7 +537,7 @@ if errorlevel neq 0 (
 )
 
 :INDEXINPUT
-if defined %maninput% (
+if defined maninput (
     echo Already manually inputted. Moving to next step...
     timeout 2 /NOBREAK <nul
 )
