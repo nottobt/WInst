@@ -1,10 +1,9 @@
 @echo off
 :: Windows Installation Executable
-:: Beta Release 0.5b
+:: Beta Release 0.5.1b
 :: By NotToBT - The single developer
 :: Source code released at https://github.com/nottobt/WInst
 :: Licensed under GPL v2.0
-:: Developer's copy
 
 :: NOTE TO DEVELOPER: Finish ASCII improvements.
 set TEMPDIR="X:\Windows\Temp"
@@ -25,7 +24,7 @@ set HH=%TIME:~0,2%
 set Min=%TIME:~3,2%
 set Sec=%TIME:~6,2%
 
-set Stamp=%YYYY%-%MM%-%DD%_%HH%%Min%%Sec%
+set Stamp="%YYYY%/%MM%/%DD%_%HH%%Min%%Sec%"
 echo Timestamp: %Stamp%
 
 title WInst - V0.4.1b
@@ -90,8 +89,6 @@ echo Welcome to Windows Installation Executable
 echo Beta Release 0.4.1b
 echo. 
 echo ------------------------------------- TERMS AND CONDITIONS ------------------------------------
-echo DISCLAIMER: You should NOT use this unless you're a pre-tester or developer.
-echo DO NOT USE this unless you're on a virtual machine. As it is in a Beta phase, this program will be restricted to developers who understand Windows PE logic only.
 echo This command prompt SHOULD only be used in a place where the Windows Installation Image (install.esd or install.wim) is reachable.
 echo WARNING: Do not use this program for destructive purposes. This is only for installing purposes. the creator, by which is not responsible for any damages caused by the reckless endangerment of such people.
 echo 1. The steps will reinstall your system. By reading this, you should know that using this program without proper knowledge may destroy your system if used incorrectly.
