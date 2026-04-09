@@ -1,50 +1,13 @@
 @echo off
+title WInst - V0.6b
 :: Windows Installation Executable
-:: Beta Release 0.5.1b
+:: Beta Release 0.6b
 :: By NotToBT - The single developer
 :: Source code released at https://github.com/nottobt/WInst
 :: Licensed under GPL v2.0
 
-:: NOTE TO DEVELOPER: Finish ASCII improvements.
-set TEMPDIR="X:\Windows\Temp"
-set ACTION=0
-set BOOT_MODE=0
-set DISK=0
-set CONF1=0
-set IMGDIR=0
-set INDEX=0
-set MANINPUT=0
-
-:: Pre-initalisation
-
-set YYYY=%DATE:~10,4%
-set MM=%DATE:~4,2%
-set DD=%DATE:~7,2%
-set HH=%TIME:~0,2%
-set Min=%TIME:~3,2%
-set Sec=%TIME:~6,2%
-
-set Stamp="%YYYY%/%MM%/%DD%_%HH%%Min%%Sec%"
-echo Timestamp: %Stamp%
-cls
-
-title WInst - V0.4.1b
-
-:: Configure Logging
-echo [%Stamp%] Logging System: Logging has started. > %TEMPDIR%\WinstLOGS.log
-echo No logging? (YES/NO)   
-set /p CONFIRM="Confirmation: "
-if /i "%CONFIRM%" neq "YES" (
-    echo Logging will be disabled.
-    timeout 2 /NOBREAK <nul
-    goto TANDC
-)
-echo Logging will be enabled.
-timeout 2 /NOBREAK <nul
-goto TANDC
-
 :: WInst - Windows Installation Executable
-:: Copyleft 2026 NotToBT
+:: Copyright (C) NotToBT 2025, 2026.
 ::
 :: This program is free software; you can redistribute it and/or modify
 :: it under the terms of the GNU General Public License as published by
@@ -61,7 +24,117 @@ goto TANDC
 :: 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 ::
 
-:: Find if user is in WinPE or normal Windows
+:: NOTE TO DEVELOPER: Finish ASCII improvements.
+set TEMPDIR="X:\Windows\Temp"
+set ACTION=0
+set BOOT_MODE=0
+set DISK=0
+set CONF1=0
+set IMGDIR=0
+set INDEX=0
+set MANINPUT=0
+set TDF=0
+set Stamp=0
+
+:: Time Handling (PRE-RUN STEP 1)
+for /f "tokens=2 delims==" %%I in ('wmic os get localdatetime /value') do set "datetime=%%I"
+set YYYY=%datetime:~0,4%
+set MM=%datetime:~4,2%
+set DD=%datetime:~6,2%
+
+set "HH=%TIME: =0%"
+set HH=%HH:~0,2%
+set Min=%TIME:~3,2%
+set Sec=%TIME:~6,2%
+
+:FORMATINPUT
+echo Please set the format of the date and time so the logging can be configured.
+pause
+cls
+echo Formats:
+echo    1. DD/MM/YYYY
+echo    2. MM/DD/YYYY
+echo    3. YYYY/MM/DD
+echo    4. YYYY/DD/MM
+echo    5. MM/YYYY/DD
+echo    6. DD/YYYY/MM
+set /p TDF="Format:  "
+
+goto FORMAT_%TDF%
+
+:FORMAT_1
+
+set Stamp="%DD%/%MM%/%YYYY%_%HH%%Min%%Sec%"
+echo Timestamp: %Stamp%
+
+:FORMAT_2
+
+set Stamp="%MM%/%DD%/%YYYY%_%HH%%Min%%Sec%"
+echo Timestamp: %Stamp%
+
+:FORMAT_3
+
+set Stamp="%YYYY%/%MM%/%DD%_%HH%%Min%%Sec%"
+echo Timestamp: %Stamp%
+
+:FORMAT_4
+
+set Stamp="%YYYY%/%DD%/%MM%_%HH%%Min%%Sec%"
+echo Timestamp: %Stamp%
+
+:FORMAT_5
+
+set Stamp="%MM%/%YYYY%/%DD%_%HH%%Min%%Sec%"
+echo Timestamp: %Stamp%
+
+:FORMAT_6
+
+set Stamp="%DD%/%YYYY%/%MM%_%HH%%Min%%Sec%"
+echo Timestamp: %Stamp%
+
+:FORMAT_DEFAULT
+
+echo Invalid input.
+echo Try again.
+timeout 3 /NOBREAK <nul
+cls
+goto FORMATINPUT
+
+if %errorlevel% neq 0 (
+    echo Time and date formatting successful.
+    echo Proceeding to next step of the setup...
+    timeout 3 /NOBREAK <nul
+    cls
+    goto LOGGING
+) else (
+    echo Time and date formatting unsuccessful.
+    echo Logging will be disabled by default.
+    echo As logging will be disabled, you will not know about the setup that WInst applied.
+    echo Proceeding to next step of the setup...
+    timeout 3 /NOBREAK <nul
+    echo Waiting for user input...
+    pause <nul
+    cls
+    goto ADTEST
+)
+
+
+:: Configure Logging (PRE-RUN STEP 2)
+:LOGGING
+echo [%Stamp%] Logging System: Logging has started. > %TEMPDIR%\WinstLOGS.log
+echo No logging? (YES/NO)
+set /p CONFIRM="Confirmation: "
+if /i "%CONFIRM%" neq "YES" (
+    echo Logging will be disabled.
+    timeout 2 /NOBREAK <nul
+    goto TANDC
+)
+echo Logging will be enabled.
+timeout 2 /NOBREAK <nul
+goto TANDC
+
+:: ADMIN TEST (PRE-RUN STEP 3)
+:ADTEST
 for /f "tokens=3" %%i in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control" /v SystemStartOptions 2^>nul') do set "bootOpts=%%i"
 echo %bootOpts% | find /i "MININT" >nul 2>&1
 if %errorlevel% equ 0 (
@@ -88,18 +161,15 @@ cls
 echo Read the terms, conditions and changelogs before running the program.
 echo.
 echo Welcome to Windows Installation Executable
-echo Beta Release 0.4.1b
+echo Beta Release 0.6b
 echo. 
 echo ------------------------------------- TERMS AND CONDITIONS ------------------------------------
 echo This command prompt SHOULD only be used in a place where the Windows Installation Image (install.esd or install.wim) is reachable.
 echo WARNING: Do not use this program for destructive purposes. This is only for installing purposes. the creator, by which is not responsible for any damages caused by the reckless endangerment of such people.
 echo 1. The steps will reinstall your system. By reading this, you should know that using this program without proper knowledge may destroy your system if used incorrectly.
 echo 2. During step 2, the user shall not terminate the system until the process is finished. If so, the system may be inopreateable and may be destroyed.
+echo This program doesn't provide any sort of warranty or refund, as provided in the GNU General Public License V2.0.
 echo.
-echo ----------------------------------------------------------------------------------------------
-echo Finished reading?
-pause
-cls
 echo ------------------------------------- CHANGELOGS ----------------------------------------
 echo Feb 2026 UPDATES
 echo 0.1 - BETA version released
@@ -113,6 +183,9 @@ echo     - Minor bug fixes -
 echo                       - Syntax errors in :OPTION
 echo                       - Logging
 echo                                - Fixed file extension (.txt > .log)
+echo 0.6 - More bug fixes
+echo           - Time formatting options added (Six options)
+echo           - Terms and conditions updated
 echo.
 echo ---------------------------------------- IN DEVELOPMENT -------------------------------------------------
 echo.
@@ -130,7 +203,8 @@ echo 0.3.2 - Fixed a bug in the "FORMAT" confirmation that proceeded even if the
 echo       - Improvements - Improved GUI a bit
 echo 0.5.1 - Added a precaution before the terms and conditions that prevents the user from running the program in Full Windows.
 echo       - Major bug fixes
-echo 0.5.2 - Minor syntax errors fixed
+echo 0.5.2 - Minor syntax errors that are fixed.
+echo ------------------------------------------------------------------------------------------------------------
 echo Press any key to continue.
 if /i "%CONFIRM%" neq "YES" (
     pause <nul
@@ -144,7 +218,7 @@ cls
 echo Options:
 echo ----------------------------------------------------------------------------------------------------
 echo.
-echo Windows Installation WIzard (WInst) Version 0.5
+echo Windows Installation WIzard (WInst) Version 0.6 BETA
 echo.
 echo 1. Install Windows
 echo.
@@ -306,7 +380,7 @@ echo Step 2/2: Launching .bat script file... (MAY TAKE A LONG TIME)
 diskpart /s X:\Windows\Temp\WInstTEMP.txt
 if %errorlevel% neq 0 (
     echo Disk is non-existent.
-    echo Please reinput disk bumbers again. 
+    echo Please reinput disk number again.
     echo Part 2 will restart.
     timeout 2 /NOBREAK <nul
     goto PARTCRT
@@ -329,7 +403,12 @@ where /r D:\ "install.wim"
 where /r X:\ "install.wim"
 if errorlevel neq 0 (
     echo File not found. You'll have to put the file's directory and name manually.
-        if /i "%CONFIRM%" neq "YES" (
+    echo Generating files...
+    timeout 3 /NOBREAK <nul
+    echo Proceeding...
+    cls
+    goto maninput
+    if /i "%CONFIRM%" neq "YES" (
         echo [%STAMP%] .wim or .esd files not found. The user will have to input files manually. >> WInstLOGS.log
     )   
     :maninput
@@ -350,6 +429,12 @@ if errorlevel neq 0 (
 if defined %maninput% (
     echo Already manually inputted. Moving to next step...
     timeout 2 /NOBREAK <nul
+) else (
+    echo File was not found.
+    echo Please retry.
+    pause
+    cls
+    goto maninput
 )
 set /p IMGDIR="Image File: "
 cls
@@ -471,7 +556,7 @@ echo The device will continue partitioning.
 pause
 cls
 :: DISKPART
-if (%BOOT_MODE%)=="UEFI" (
+if "%BOOT_MODE%"=="UEFI" (
     echo Select Volume:
     diskpart list Volume
     set /p VOLUME="Volume: "
@@ -537,7 +622,7 @@ if errorlevel neq 0 (
 )
 
 :INDEXINPUT
-if defined maninput (
+if defined %maninput% (
     echo Already manually inputted. Moving to next step...
     timeout 2 /NOBREAK <nul
 )
