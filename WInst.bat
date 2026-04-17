@@ -1,10 +1,8 @@
 @echo off
 title WInst - V0.6b
 :: Windows Installation Executable
+
 :: Beta Release 0.6b
-:: By NotToBT - The single developer
-:: Source code released at https://github.com/nottobt/WInst
-:: Licensed under GPL v2.0
 
 :: WInst - Windows Installation Executable
 :: Copyright (C) NotToBT 2025, 2026.
@@ -48,59 +46,15 @@ set Min=%TIME:~3,2%
 set Sec=%TIME:~6,2%
 
 :FORMATINPUT
-echo Please set the format of the date and time so the logging can be configured.
-pause
-cls
-echo Formats:
-echo    1. DD/MM/YYYY
-echo    2. MM/DD/YYYY
-echo    3. YYYY/MM/DD
-echo    4. YYYY/DD/MM
-echo    5. MM/YYYY/DD
-echo    6. DD/YYYY/MM
-set /p TDF="Format:  "
+:: Robust ISO-style Timestamp (YYYY-MM-DD_HHMMSS)
+for /f "tokens=2 delims==" %%I in ('wmic os get localdatetime /value') do set "dt=%%I"
+set "Stamp=%dt:~0,4%-%dt:~4,2%-%dt:~6,2%_%dt:~8,2%%dt:~10,2%%dt:~12,2%"
+
+echo The date/time formatting has been set as %Stamp%.
 
 goto FORMAT_%TDF%
 
-:FORMAT_1
-
-set Stamp="%DD%/%MM%/%YYYY%_%HH%%Min%%Sec%"
-echo Timestamp: %Stamp%
-
-:FORMAT_2
-
-set Stamp="%MM%/%DD%/%YYYY%_%HH%%Min%%Sec%"
-echo Timestamp: %Stamp%
-
-:FORMAT_3
-
-set Stamp="%YYYY%/%MM%/%DD%_%HH%%Min%%Sec%"
-echo Timestamp: %Stamp%
-
-:FORMAT_4
-
-set Stamp="%YYYY%/%DD%/%MM%_%HH%%Min%%Sec%"
-echo Timestamp: %Stamp%
-
-:FORMAT_5
-
-set Stamp="%MM%/%YYYY%/%DD%_%HH%%Min%%Sec%"
-echo Timestamp: %Stamp%
-
-:FORMAT_6
-
-set Stamp="%DD%/%YYYY%/%MM%_%HH%%Min%%Sec%"
-echo Timestamp: %Stamp%
-
-:FORMAT_DEFAULT
-
-echo Invalid input.
-echo Try again.
-timeout 3 /NOBREAK <nul
-cls
-goto FORMATINPUT
-
-if %errorlevel% neq 0 (
+if %errorlevel%=="0" (
     echo Time and date formatting successful.
     echo Proceeding to next step of the setup...
     timeout 3 /NOBREAK <nul
@@ -124,14 +78,15 @@ if %errorlevel% neq 0 (
 echo [%Stamp%] Logging System: Logging has started. > %TEMPDIR%\WinstLOGS.log
 echo No logging? (YES/NO)
 set /p CONFIRM="Confirmation: "
-if /i "%CONFIRM%" neq "YES" (
+:: Extract 1 character starting at position 0
+if "%ACTION:~0,1%"=="3" (
     echo Logging will be disabled.
     timeout 2 /NOBREAK <nul
-    goto TANDC
+    goto OPTION
 )
 echo Logging will be enabled.
 timeout 2 /NOBREAK <nul
-goto TANDC
+goto OPTION
 
 :: ADMIN TEST (PRE-RUN STEP 3)
 :ADTEST
@@ -145,7 +100,7 @@ if %errorlevel% equ 0 (
     echo The program will contiue shortly...
     timeout 2 /NOBREAK <nul
     cls
-    goto TANDC
+    goto OPTION
 ) else (
     echo WInst has detected that the user is currently operating this program in the full version of Windows.
     if /i "%CONFIRM%" neq "YES" (
@@ -156,62 +111,6 @@ if %errorlevel% equ 0 (
     exit /b
 )
 
-cls
-:TANDC
-echo Read the terms, conditions and changelogs before running the program.
-echo.
-echo Welcome to Windows Installation Executable
-echo Beta Release 0.6b
-echo. 
-echo ------------------------------------- TERMS AND CONDITIONS ------------------------------------
-echo This command prompt SHOULD only be used in a place where the Windows Installation Image (install.esd or install.wim) is reachable.
-echo WARNING: Do not use this program for destructive purposes. This is only for installing purposes. the creator, by which is not responsible for any damages caused by the reckless endangerment of such people.
-echo 1. The steps will reinstall your system. By reading this, you should know that using this program without proper knowledge may destroy your system if used incorrectly.
-echo 2. During step 2, the user shall not terminate the system until the process is finished. If so, the system may be inopreateable and may be destroyed.
-echo This program doesn't provide any sort of warranty or refund, as provided in the GNU General Public License V2.0.
-echo.
-echo ------------------------------------- CHANGELOGS ----------------------------------------
-echo Feb 2026 UPDATES
-echo 0.1 - BETA version released
-echo 0.4 - Major updates released
-echo     - Step 3
-echo            - Step 3 installs the system without overwriting user data.
-echo            - Bug fixes
-echo 0.4.1 - Major bug fixes
-echo 0.5 - Logging
-echo     - Minor bug fixes -
-echo                       - Syntax errors in :OPTION
-echo                       - Logging
-echo                                - Fixed file extension (.txt > .log)
-echo 0.6 - More bug fixes
-echo           - Time formatting options added (Six options)
-echo           - Terms and conditions updated
-echo.
-echo ---------------------------------------- IN DEVELOPMENT -------------------------------------------------
-echo.
-echo Major improvements -
-echo                    - Major UI Improvements 
-echo.
-echo Step 4
-echo ---------------------------------------------------------------------------------------------------------
-echo MINOR UPDATES
-echo 0.2 - Added file finders in Step 3
-echo Bug Fixes
-echo 0.3 - Added Terms and Conditions and changelogs
-echo Bug fixes
-echo 0.3.2 - Fixed a bug in the "FORMAT" confirmation that proceeded even if the user typed something else rather than FORMAT.
-echo       - Improvements - Improved GUI a bit
-echo 0.5.1 - Added a precaution before the terms and conditions that prevents the user from running the program in Full Windows.
-echo       - Major bug fixes
-echo 0.5.2 - Minor syntax errors that are fixed.
-echo ------------------------------------------------------------------------------------------------------------
-echo Press any key to continue.
-if /i "%CONFIRM%" neq "YES" (
-    pause <nul
-) else (
-    echo [%STAMP%] The user has accepted the terms and conditions. >> WInstLOGS.log
-)
-pause <nul
 cls
 
 :OPTION
@@ -304,28 +203,73 @@ pause
 cls
 goto :PARTCRT
 
-:: Part 2 - Partitioning
+:: Part 2 - Partitioning (Revamped)
 :PARTCRT
-echo Step 2: Partitions
-echo Making partitions are easy, if you know how. 
-echo Please insert your disk here:
-diskpart list disk
-set /p DISK="Disk: "
-echo ALL DATA WILL BE DELETED WHEN PARTITIONING. Are you sure?
-echo Type "FORMAT" to partition the drive.
+log_header "STEP 2: DISK SELECTION & PARTITIONING"
+echo.
+echo Choose different disk showcasing programs.
+echo.
+echo 1. Diskpart (Simple, Reliable)
+echo.
+echo 2. WMIC (More detailed, assuring)
+echo.
+set /p DSS="Program:  "
+if %DSS%=="1" (
+    echo You have chosen DiskPart as the primary disk showcasing program.
+    echo Proceeding...
+    goto DPDSS
+)
+ if %DSS%=="2" (
+    echo You have chosen WMIC as the primary disk showcasing program.
+    echo Proceeding...
+    goto WIDSS
+)
+echo Wrong option.
+pause
+echo Please choose again.
+cls
+goto PARTCRT
+:WIDSS
+echo ====================================================================
+echo   INDEX   SIZE (GB)    MODEL                     SERIAL NUMBER
+echo --------------------------------------------------------------------
+wmic diskdrive get index, size, model, serialnumber
+echo ====================================================================
+echo.
+
+goto DISKAYS
+:DPDSS
+
+echo list disk | diskpart
+goto DISKAYS
+
+:DISKAYS
+
+set /p DISK="Target Disk Index (e.g., 0): "
+
+if not defined DISK goto PARTCRT
+
+for /f "tokens=2 delims==" %%A in ('wmic diskdrive where index^=%DISK% get model /value 2^>nul') do set "SELECTED_MODEL=%%A"
+
+cls
+echo.
+echo !!!!!!!!!!!!!!!!!!!!!!!!!!! WARNING !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+echo.
+echo YOU HAVE SELECTED: Disk %DISK% (%SELECTED_MODEL%)
+echo ALL DATA ON THIS DISK WILL BE PERMANENTLY ERASED.
+echo.
+echo Type "FORMAT" to confirm and proceed.
 set /p CONF1="Confirmation: "
-if "%CONF1%" neq "FORMAT" (
-    echo If you don't format, The program will exit profusely.
-    pause
-    cls
-    echo The user exited before executing the step: Step 1.
-    echo The program will exit.
-    pause
+if /i "%CONF1%" neq "FORMAT" (
+    echo.
+    echo [ABORT] User cancelled format. As installing without formatting is impossible, The program will exit.
     if /i "%CONFIRM%" neq "YES" (
-        echo [%STAMP%] The user had chosen to not format, thus marking the operation unfinished. WInst will exit. >> WInstLOGS.log
+        echo [%STAMP%] The user has cancelled: Formatting. User will be exiting...
     )
-    goto OPTION1
-)    
+    timeout 3 >nul
+    cls
+    exit /b
+)
 cls
 echo Partitioning drive... Please be patient, this will take a long time as formatting a drive takes a long amount of time.
 pause
