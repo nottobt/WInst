@@ -1,8 +1,6 @@
-@echo off
-title WInst - V0.6b
+:: SPDX-License-Identifier: GPL-2.0-or-later
 :: Windows Installation Executable
-
-:: Beta Release 0.6b
+:: Beta Release 0.6b (Unstable Ver.)
 
 :: WInst - Windows Installation Executable
 :: Copyright (C) NotToBT 2025, 2026.
@@ -21,6 +19,12 @@ title WInst - V0.6b
 :: with this program; if not, write to the Free Software Foundation, Inc.,
 :: 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 ::
+
+:: Before executing this program:
+:: WARNING: As this program is still in the Unstable and Beta phase (v0.6b Unstable), you should back up your data before proceeding. Not doing so will have a chance at LOSING your data.
+
+@echo off
+title WInst - V0.6b (Unstable)
 
 :: NOTE TO DEVELOPER: Finish ASCII improvements.
 set TEMPDIR="X:\Windows\Temp"
@@ -46,13 +50,10 @@ set Min=%TIME:~3,2%
 set Sec=%TIME:~6,2%
 
 :FORMATINPUT
-:: Robust ISO-style Timestamp (YYYY-MM-DD_HHMMSS)
 for /f "tokens=2 delims==" %%I in ('wmic os get localdatetime /value') do set "dt=%%I"
 set "Stamp=%dt:~0,4%-%dt:~4,2%-%dt:~6,2%_%dt:~8,2%%dt:~10,2%%dt:~12,2%"
 
 echo The date/time formatting has been set as %Stamp%.
-
-goto FORMAT_%TDF%
 
 if %errorlevel%=="0" (
     echo Time and date formatting successful.
@@ -69,9 +70,8 @@ if %errorlevel%=="0" (
     echo Waiting for user input...
     pause <nul
     cls
-    goto ADTEST
+    goto LOGGING
 )
-
 
 :: Configure Logging (PRE-RUN STEP 2)
 :LOGGING
@@ -114,10 +114,21 @@ if %errorlevel% equ 0 (
 cls
 
 :OPTION
+
+echo.
+echo  __      __  .___               __   
+echo /  \    /  \ ^|   ^|  ____    ____/  ^|_ 
+echo \   \/\/   / ^|   ^| /    \  /  _ \   __\
+echo  \        /  ^|   ^|^|   ^|  \(  ^<_^) ^|  ^|  
+echo   \__/\  /   ^|___^|^|___^|  / \____/^|__^|  
+echo        \/             \/             
+echo.
+pause
+echo Windows Installation WIzard (WInst) Version 0.6 BETA Unstable
+echo.
 echo Options:
 echo ----------------------------------------------------------------------------------------------------
 echo.
-echo Windows Installation WIzard (WInst) Version 0.6 BETA
 echo.
 echo 1. Install Windows
 echo.
@@ -181,7 +192,7 @@ goto :OPTION
 
 :: Detect Boot Mode
 :BOOTMODEDECT
-reg query HKLM\System\CurrentControlSet\Control /v PEFirmwareType | findstr /i "0x2" >nul
+reg query HKLM\System\CurrentControlSet\Control /v PEFirmwareType | find /i "0x2" >nul
 if %errorlevel% equ 0 (
     set BOOT_MODE=UEFI
 ) else (
@@ -205,41 +216,11 @@ goto :PARTCRT
 
 :: Part 2 - Partitioning (Revamped)
 :PARTCRT
-log_header "STEP 2: DISK SELECTION & PARTITIONING"
+:: "STEP 2: DISK SELECTION & PARTITIONING"
 echo.
-echo Choose different disk showcasing programs.
-echo.
-echo 1. Diskpart (Simple, Reliable)
-echo.
-echo 2. WMIC (More detailed, assuring)
-echo.
-set /p DSS="Program:  "
-if %DSS%=="1" (
-    echo You have chosen DiskPart as the primary disk showcasing program.
-    echo Proceeding...
-    goto DPDSS
-)
- if %DSS%=="2" (
-    echo You have chosen WMIC as the primary disk showcasing program.
-    echo Proceeding...
-    goto WIDSS
-)
-echo Wrong option.
-pause
-echo Please choose again.
-cls
-goto PARTCRT
-:WIDSS
-echo ====================================================================
-echo   INDEX   SIZE (GB)    MODEL                     SERIAL NUMBER
-echo --------------------------------------------------------------------
-wmic diskdrive get index, size, model, serialnumber
-echo ====================================================================
-echo.
-
-goto DISKAYS
+echo ------------------- DISKPART DISK UTILITY -----------------------
 :DPDSS
-
+:: The DiskPart Option
 echo list disk | diskpart
 goto DISKAYS
 
@@ -281,47 +262,47 @@ if /i "%CONFIRM%" neq "YES" (
 if "%BOOT_MODE%"=="UEFI" (
 
 :: DISKPART (-- UEFI --)
-    echo Step 2: 1/2 Generating .bat script file...
+    echo Step 2: 1/2 Generating .txt script file...
     cd %TEMPDIR%
-    echo select disk %DISK% > WInstTEMP.txt
-    echo clean >> WInstTEMP.txt
-    echo convert gpt >> WInstTEMP.txt
-    echo create partition primary size=450 >> WInstTEMP.txt
-    echo format quick fs=ntfs label="Recovery" >> WInstTEMP.txt
-    echo set id="de94bba4-06d1-4d40-a16a-bfd50179d6ac" >> WInstTEMP.txt
-    echo gpt attributes=0x8000000000000001 >> WInstTEMP.txt
-    echo create partition efi size=100 >> WInstTEMP.txt
-    echo format quick fs=fat32 label="System" >> WInstTEMP.txt
-    echo assign letter="S" >> WInstTEMP.txt
-    echo create partition msr size=16 >> WInstTEMP.txt
-    echo create partition primary >> WInstTEMP.txt
-    echo format quick fs=ntfs label="Windows" >> WInstTEMP.txt
-    echo assign letter="W" >> WInstTEMP.txt
-    echo exit >> WInstTEMP.txt
+    echo select disk %DISK% > %TEMPDIR%/WInstTEMP.txt
+    echo clean >> %TEMPDIR%/WInstTEMP.txt
+    echo convert gpt >> %TEMPDIR%/WInstTEMP.txt
+    echo create partition primary size=450 >> %TEMPDIR%/WInstTEMP.txt
+    echo format quick fs=ntfs label="Recovery" >> %TEMPDIR%/WInstTEMP.txt
+    echo set id="de94bba4-06d1-4d40-a16a-bfd50179d6ac" >> %TEMPDIR%/WInstTEMP.txt
+    echo gpt attributes=0x8000000000000001 >> %TEMPDIR%/WInstTEMP.txt
+    echo create partition efi size=100 >> %TEMPDIR%/WInstTEMP.txt
+    echo format quick fs=fat32 label="System" >> %TEMPDIR%/WInstTEMP.txt
+    echo assign letter="S" >> %TEMPDIR%/WInstTEMP.txt
+    echo create partition msr size=16 >> %TEMPDIR%/WInstTEMP.txt
+    echo create partition primary >> %TEMPDIR%/WInstTEMP.txt
+    echo format quick fs=ntfs label="Windows" >> %TEMPDIR%/WInstTEMP.txt
+    echo assign letter="W" >> %TEMPDIR%/WInstTEMP.txt
+    echo exit >> %TEMPDIR%/WInstTEMP.txt
     if /i "%CONFIRM%" neq "YES" (
         echo [%STAMP%] WInst has finished generating critical files for Step 3. Type: UEFI/GPT partition scheme. >> WInstLOGS.log
     )   
 ) else (
 
     :: DISKPART (-- LEGACY --)
-    echo select disk %DISK% > WInstTEMP.txt
-    echo clean >> WInstTEMP.txt
-    echo convert mbr >> WInstTEMP.txt
-    echo create partition primary size=100 >> WInstTEMP.txt
-    echo format quick fs=ntfs label="System" >> WInstTEMP.txt
-    echo active >> WInstTEMP.txt
-    echo assign letter="S" >> WInstTEMP.txt
-    echo create partition primary >> WInstTEMP.txt
-    echo format quick fs=ntfs label="Windows" >> WInstTEMP.txt
-    echo assign letter="W" >> WInstTEMP.txt
-    echo exit >> WInstTEMP.txt
+    echo select disk %DISK% > %TEMPDIR%/WInstTEMP.txt
+    echo clean >> %TEMPDIR%/WInstTEMP.txt
+    echo convert mbr >> %TEMPDIR%/WInstTEMP.txt
+    echo create partition primary size=100 >> %TEMPDIR%/WInstTEMP.txt
+    echo format quick fs=ntfs label="System" >> %TEMPDIR%/WInstTEMP.txt
+    echo active >> %TEMPDIR%/WInstTEMP.txt
+    echo assign letter="S" >> %TEMPDIR%/WInstTEMP.txt
+    echo create partition primary >> %TEMPDIR%/WInstTEMP.txt
+    echo format quick fs=ntfs label="Windows" >> %TEMPDIR%/WInstTEMP.txt
+    echo assign letter="W" >> %TEMPDIR%/WInstTEMP.txt
+    echo exit >> %TEMPDIR%/WInstTEMP.txt
     if /i "%CONFIRM%" neq "YES" (
         echo [%STAMP%] WInst has finished generating critical files for Step 3. Type: Legacy BIOS/MBR partition scheme. >> WInstLOGS.log
     )   
 )
 :: DISKPART SCRIPT Launch
 echo Step 2/2: Launching .bat script file... (MAY TAKE A LONG TIME)
-diskpart /s X:\Windows\Temp\WInstTEMP.txt
+diskpart /s %TEMPDIR%/WInstTEMP.txt
 if %errorlevel% neq 0 (
     echo Disk is non-existent.
     echo Please reinput disk number again.
@@ -341,54 +322,28 @@ echo If you know the place where Windows (the .wim or .esd ones) You should put 
 echo You NEED to put the install.esd in the end of the file. (Example: X:\Example\Example)
 echo WInst will open another instance of cmd to find the .esd file. Navigate using cd and dir.
 echo WInst will attempt to find a install.esd or .wim file in all drives. Please be patient..
-where /r D:\ "install.esd"
-where /r X:\ "install.esd"
-where /r D:\ "install.wim"
-where /r X:\ "install.wim"
-if errorlevel neq 0 (
-    echo File not found. You'll have to put the file's directory and name manually.
-    echo Generating files...
-    timeout 3 /NOBREAK <nul
-    echo Proceeding...
-    cls
-    goto maninput
-    if /i "%CONFIRM%" neq "YES" (
-        echo [%STAMP%] .wim or .esd files not found. The user will have to input files manually. >> WInstLOGS.log
-    )   
-    :maninput
-    echo AS the file wasn't found. you will have ot input the install.esd or .wim file manually.
-    set /p maninput="File Directory: "
-    goto INDEXINPUT
-) else (
-    echo Installation file found.
-    echo Going to next step...
-    timeout 2 /NOBREAK
-    if /i "%CONFIRM%" neq "YES" (
-        echo [%STAMP%] Installation file found. >> WInstLOGS.log
-    )   
-    goto INDEXINPUT
+SET WIMPATH=
+FOR %%i IN (C D E F G H I J K L M N O P Q R S T U V W Y Z) DO (
+    IF EXIST "%%i:\sources\install.wim" (
+        SET WIMPATH=%%i:\sources\install.wim
+        GOTO :FOUND
+    )
+    IF EXIST "%%i:\sources\install.esd" (
+        SET WIMPATH=%%i:\sources\install.esd
+        GOTO :FOUND
+    )
 )
 
-:INDEXINPUT
-if defined %maninput% (
-    echo Already manually inputted. Moving to next step...
-    timeout 2 /NOBREAK <nul
-) else (
-    echo File was not found.
-    echo Please retry.
-    pause
-    cls
-    goto maninput
-)
-set /p IMGDIR="Image File: "
-cls
+:NOTFOUND
+echo [ERROR] WInst cannot find install.wim or install.esd on any drive.
+pause
+exit
+
+:FOUND
+echo [SUCCESS] Found image at: %WIMPATH%
+
 echo If it is a valid .esd or .wim file, DISM will identify all the versions. WInst will allow you to choose between multiple versions of Windows.
-if errorlevel neq 0 (
-    echo File not found. Please input again.
-    goto :maninput
-) else (
-    echo File found. Proceeding...
-)    
+  
 dism /Get-ImageInfo /ImageFile:%IMGDIR%
 :INDEX
 set /p INDEX="Index: "
@@ -479,14 +434,14 @@ if %errorlevel% equ 0 (
 echo The BIOS mode is %BOOT_MODE%.
 echo The program is inserting the boot mode to its database...
 if /i "%CONFIRM%" neq "YES" (
-   echo [%STAMP%] WInst has detected the syetem firmware type as %BOOT_MODE%. >> WInstLOGS.log
+   echo [%STAMP%] WInst has detected the system firmware type as %BOOT_MODE%. >> WInstLOGS.log
 )
 timeout 3 /NOBREAK <nul
-goto PARTCRTACTION3
+goto PARTCRT2
 
 :: Step 2: Partitioning
 
-:PARTCRTACTION3
+:PARTCRT2
 echo Step 2: Partitions
 echo Making partitions are easy, if you know how. 
 echo Please insert your disk here:
@@ -507,10 +462,10 @@ if "%BOOT_MODE%"=="UEFI" (
     echo WInst will use the selected volume as a EFI partition.
     pause    
     echo Step 1/2: The program will wipe ONLY the EFI partitions. The other partitions will stay untouched until later.
-    echo sel vol %VOLUME% > WInstTEMP.txt
-    echo format fs=fat32 quick label="System" >> WInstTEMP.txt
-    echo assign letter S >> WInstTEMP.txt
-    echo exit >> WInstTEMP.txt
+    echo sel vol %VOLUME% > %TEMPDIR%/WInstTEMP.txt
+    echo format fs=fat32 quick label="System" >> %TEMPDIR%/WInstTEMP.txt
+    echo assign letter S >> %TEMPDIR%/WInstTEMP.txt
+    echo exit >> %TEMPDIR%/WInstTEMP.txt
 ) else (
    echo Select Volume:
     diskpart list Volume
@@ -518,17 +473,17 @@ if "%BOOT_MODE%"=="UEFI" (
     echo WInst will use the selected volume as a EFI partition.
     pause   
     echo Step 1/2: The program will wipe ONLY the EFI partitions. The other partitions will stay untouched until later.    
-    echo sel vol %VOLUME% > WInstTEMP.txt
-    echo format fs=ntfs quick label="System" >> WInstTEMP.txt
-    echo assign letter S >> WInstTEMP.txt
-    echo exit >> WInstTEMP.txt
+    echo sel vol %VOLUME% > %TEMPDIR%/WInstTEMP.txt
+    echo format fs=ntfs quick label="System" >> %TEMPDIR%/WInstTEMP.txt
+    echo assign letter S >> %TEMPDIR%/WInstTEMP.txt
+    echo exit >> %TEMPDIR%/WInstTEMP.txt
 )
 
 if /i "%CONFIRM%" neq "YES" (
    echo [%STAMP%] WInst has finished partitioning the system boot drive. >> WInstLOGS.log
 )
 echo Step 2/2: Executing .bat file
-diskpart /s X:\Windows\Temp\WInstTEMP.txt
+diskpart /s X:\Windows\Temp\%TEMPDIR%/WInstTEMP.txt
 
 echo Operation complete.
 pause
@@ -622,7 +577,7 @@ echo Summary:
 echo  --------------------- PARITIONING -----------------------
 echo.
 echo Bios type: %BOOT_MODE%
-echo Initalised Partitions:
+echo Initialised Partitions:
 if "%BOOT_MODE%"=="UEFI" ( 
     echo EFI Partition, Size 100MB                                        - Unchanged
     echo MSR Parition, Size 16MB                                          - Unchanged
@@ -646,5 +601,5 @@ echo To: SYSTEM/EFI Partition
 echo -------------------------------------------------------------------------------------------------
 echo.
 echo Installation complete. The system will reboot in approximately 35 seconds.
-timeout 32 /NOBREAK <nul
+timeout 36 /NOBREAK <nul
 wpeutil reboot
