@@ -26,13 +26,34 @@
 @echo off
 title WInst - V0.6b (Unstable)
 
+:setargs
+IF "%1"=="" GOTO MAINSETUP
+:: Check for any argument idents
+IF /I "%1"=="-help" GOTO help_arg
+IF /I "%1"=="/help" GOTO help_arg
+IF /I "%1"=="-h"     GOTO help_arg
+IF /I "%1" Middle=="/h"     GOTO help_arg
+
+:: Value identifier (Commented out because we basically don't have any name identifiers)
+:: IF /I "%1"=="-name" (
+:: 	SET "USER_NAME=%2"
+::	SHIFT
+::	SHIFT
+::      GOTO help_arg
+:: )
+
+echo Unknown option: %1
+GOTO help_arg
+
+ENDLOCAL
 :: NOTE TO DEVELOPER: Finish ASCII improvements.
+:MAINSETUP
 set TEMPDIR="X:\Windows\Temp"
 set ACTION=0
 set BOOT_MODE=0
 set DISK=0
 set CONF1=0
-set IMGDIR=0
+set WIMPATH=0
 set INDEX=0
 set MANINPUT=0
 set TDF=0
@@ -124,11 +145,10 @@ echo   \__/\  /   ^|___^|^|___^|  / \____/^|__^|
 echo        \/             \/             
 echo.
 pause
-echo Windows Installation WIzard (WInst) Version 0.6 BETA Unstable
+echo Windows Installation Wizard (WInst) Version 0.6 BETA Unstable
 echo.
 echo Options:
 echo ----------------------------------------------------------------------------------------------------
-echo.
 echo.
 echo 1. Install Windows
 echo.
@@ -344,7 +364,7 @@ echo [SUCCESS] Found image at: %WIMPATH%
 
 echo If it is a valid .esd or .wim file, DISM will identify all the versions. WInst will allow you to choose between multiple versions of Windows.
   
-dism /Get-ImageInfo /ImageFile:%IMGDIR%
+dism /Get-ImageInfo /ImageFile:%WIMPATH%
 :INDEX
 set /p INDEX="Index: "
 if %errorlevel% neq 0 (
@@ -365,7 +385,7 @@ cls
 echo Extracting contents
 echo Part 3: 1/1: Using DISM to apply the files from the .esd file...
 
-dism /Apply-Image /ImageFile:%IMGDIR% /Index:%INDEX% /ApplyDir:W:\
+dism /Apply-Image /ImageFile:%WIMPATH% /Index:%INDEX% /ApplyDir:W:\
 
 if /i "%CONFIRM%" neq "YES" (
     echo [%STAMP%] WInst has extracted the contents. If dism returned a error, it couldn't find the file or it ran into a problem. >> WInstLOGS.log
@@ -406,7 +426,7 @@ echo ------------------------ Windows Image Information ------------------------
 echo.
 echo Applied using DISM
 echo Index: %INDEX%
-echo ImageDir=%IMGDIR%
+echo ImageDir=%WIMPATH%
 echo Applied Directory: Main Drive (PRIMARY)
 echo ---------------------------- BCDBOOT ----------------------------
 echo.
@@ -445,19 +465,41 @@ goto PARTCRT2
 echo Step 2: Partitions
 echo Making partitions are easy, if you know how. 
 echo Please insert your disk here:
-diskpart list disk
-set /p DISK="Disk: "
-if /i "%CONFIRM%" neq "YES" (
-   echo [%STAMP%] The user has selected Disk %DISK%. >> WInstLOGS.log
+echo -------------------- DISKPART DISK UTILITY -----------------------
+:: The DiskPart Option
+echo list disk | diskpart
+goto DISKAYS
+
+:DISKAYS
+
+set /p DISK="Target Disk Index (e.g., 0): "
+
+if not defined DISK goto PARTCRT
+
+for /f "tokens=2 delims==" %%A in ('wmic diskdrive where index^=%DISK% get model /value 2^>nul') do set "SELECTED_MODEL=%%A"
+
+cls
+echo Type "CONFIRM" to confirm and proceed.
+set /p CONF1="Confirmation: "
+if /i "%CONF1%" neq "CONFIRM" (
+    echo.
+    echo [ABORT] User cancelled format. As installing without formatting is impossible, The program will exit.
+    if /i "%CONFIRM%" neq "YES" (
+        echo [%STAMP%] The user has cancelled: EFI formatting.. User will be exiting...
+    )
+    timeout 3 >nul
+    cls
+    exit /b
 )
 
-echo The device will continue partitioning.
-pause
-cls
+if /i "%CONFIRM%" neq "YES" (
+    echo [%STAMP%] The user has chosen disk %SELECTED_MODEL%, Formatting will begin shortly.
+)
+
 :: DISKPART
 if "%BOOT_MODE%"=="UEFI" (
-    echo Select Volume:
-    diskpart list Volume
+    echo Select Partition:
+    diskpart lis vol
     set /p VOLUME="Volume: "
     echo WInst will use the selected volume as a EFI partition.
     pause    
@@ -468,7 +510,7 @@ if "%BOOT_MODE%"=="UEFI" (
     echo exit >> %TEMPDIR%/WInstTEMP.txt
 ) else (
    echo Select Volume:
-    diskpart list Volume
+    diskpart lis vol
     set /p VOLUME="Volume: "
     echo WInst will use the selected volume as a EFI partition.
     pause   
@@ -497,44 +539,29 @@ echo If you know the place where Windows (the .wim or .esd ones) You should put 
 echo You NEED to put the install.esd in the end of the file. (Example: X:\Example\Example)
 echo WInst will open another instance of cmd to find the .esd file. Navigate using cd and dir.
 echo WInst will attempt to find a install.esd or .wim file in all drives. Please be patient..
-where /r D:\ "install.esd"
-where /r X:\ "install.esd"
-where /r D:\ "install.wim"
-where /r X:\ "install.wim"
-if errorlevel neq 0 (
-    echo File not found. You'll have to put the file's directory and name manually.
-        if /i "%CONFIRM%" neq "YES" (
-        echo [%STAMP%] .wim or .esd files not found. The user will have to input files manually. >> WInstLOGS.log
-    )   
-    :maninput
-    echo AS the file wasn't found. you will have ot input the install.esd or .wim file manually.
-    set /p maninput="File Directory: "
-    goto INDEXINPUT
-) else (
-    echo Installation file found.
-    echo Going to next step...
-    timeout 2 /NOBREAK
-    if /i "%CONFIRM%" neq "YES" (
-        echo [%STAMP%] Installation file found. >> WInstLOGS.log
-    )   
-    goto INDEXINPUT
+SET WIMPATH=
+FOR %%i IN (C D E F G H I J K L M N O P Q R S T U V W Y Z) DO (
+    IF EXIST "%%i:\sources\install.wim" (
+        SET WIMPATH=%%i:\sources\install.wim
+        GOTO :FOUND2
+    )
+    IF EXIST "%%i:\sources\install.esd" (
+        SET WIMPATH=%%i:\sources\install.esd
+        GOTO :FOUND2
+    )
 )
 
-:INDEXINPUT
-if defined %maninput% (
-    echo Already manually inputted. Moving to next step...
-    timeout 2 /NOBREAK <nul
-)
-set /p IMGDIR="Image File: "
-cls
+:NOTFOUND2
+echo [ERROR] WInst cannot find install.wim or install.esd on any drive.
+pause
+exit
+
+:FOUND2
+echo [SUCCESS] Found image at: %WIMPATH%
+
 echo If it is a valid .esd or .wim file, DISM will identify all the versions. WInst will allow you to choose between multiple versions of Windows.
-if errorlevel neq 0 (
-    echo File not found. Please input again.
-    goto :maninput
-) else (
-    echo File found. Proceeding...
-)    
-dism /Get-ImageInfo /ImageFile:%IMGDIR%
+  
+dism /Get-ImageInfo /ImageFile:%WIMPATH%
 :INDEX
 set /p INDEX="Index: "
 if %errorlevel% neq 0 (
@@ -551,11 +578,10 @@ if %errorlevel% neq 0 (
     timeout 2 /NOBREAK <nul
 )
 
-dism /Apply-Image /ImageFile:%IMGDIR% /Index:%INDEX% /ApplyDir:W:\
+dism /Apply-Image /ImageFile:%WIMPATH% /Index:%INDEX% /ApplyDir:W:\
 echo Operation complete.
 pause
 cls
-
 :: Part 4: bcdboot EFI initalisation
 :BCDBTINIT
 echo This part will initalise the EFI partition. This will take a short amount of time.
@@ -579,7 +605,7 @@ echo.
 echo Bios type: %BOOT_MODE%
 echo Initialised Partitions:
 if "%BOOT_MODE%"=="UEFI" ( 
-    echo EFI Partition, Size 100MB                                        - Unchanged
+    echo EFI Partition, Size 100MB                                        - Formatted
     echo MSR Parition, Size 16MB                                          - Unchanged
     echo Recovery Partition, Size 450MB
     echo Primary/Windows Partition, Size depends on your drive.
@@ -591,7 +617,7 @@ echo ------------------------ Windows Image Information ------------------------
 echo.
 echo Applied using DISM
 echo Index: %INDEX%
-echo ImageDir=%IMGDIR%
+echo ImageDir=%WIMPATH%
 echo Applied Directory: Main Drive (PRIMARY)
 echo ---------------------------- BCDBOOT ----------------------------
 echo.
@@ -603,3 +629,7 @@ echo.
 echo Installation complete. The system will reboot in approximately 35 seconds.
 timeout 36 /NOBREAK <nul
 wpeutil reboot
+
+:help_arg
+echo Usage: %~nx0 [-help]
+exit /b
