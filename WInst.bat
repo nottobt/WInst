@@ -28,11 +28,9 @@ title WInst - V0.6b (Unstable)
 
 :setargs
 IF "%1"=="" GOTO MAINSETUP
-:: Check for any argument idents
 IF /I "%1"=="-help" GOTO help_arg
 IF /I "%1"=="/help" GOTO help_arg
 IF /I "%1"=="-h"     GOTO help_arg
-IF /I "%1" Middle=="/h"     GOTO help_arg
 
 :: Value identifier (Commented out because we basically don't have any name identifiers)
 :: IF /I "%1"=="-name" (
@@ -58,6 +56,8 @@ set INDEX=0
 set MANINPUT=0
 set TDF=0
 set Stamp=0
+set ACTIONL=0
+set OPTION=0
 
 :: Time Handling (PRE-RUN STEP 1)
 for /f "tokens=2 delims==" %%I in ('wmic os get localdatetime /value') do set "datetime=%%I"
@@ -96,18 +96,20 @@ if %errorlevel%=="0" (
 
 :: Configure Logging (PRE-RUN STEP 2)
 :LOGGING
-echo [%Stamp%] Logging System: Logging has started. > %TEMPDIR%\WinstLOGS.log
 echo No logging? (YES/NO)
-set /p CONFIRM="Confirmation: "
-:: Extract 1 character starting at position 0
-if "%ACTION:~0,1%"=="3" (
+set /p ACTIONL="Confirmation: "
+if "%ACTIONL:~0,1%"=="Y" (
     echo Logging will be disabled.
     timeout 2 /NOBREAK <nul
+    set CONFIRM=NO
     goto OPTION
 )
 echo Logging will be enabled.
 timeout 2 /NOBREAK <nul
+echo [%Stamp%] Logging System: Logging has started. > %TEMPDIR%\WinstLOGS.log
+set CONFIRM=YES
 goto OPTION
+
 
 :: ADMIN TEST (PRE-RUN STEP 3)
 :ADTEST
@@ -164,11 +166,11 @@ set /p ACTION="What action would you choose? "
 if "%ACTION%"=="1" (
     echo Installation process will start in a few seconds. Please stay put.
     if /i "%CONFIRM%" neq "YES" (
-    pause <nul
-    cls
-) else (
-    echo [%STAMP%] The user has chosen option 1. >> WInstLOGS.log
-)
+  	  pause <nul
+ 	  cls
+    ) else (
+   	 echo [%STAMP%] The user has chosen option 1. >> WInstLOGS.log
+    )
     timeout 3 /NOBREAK <nul
     cls
     goto INSTALLSTEP1
@@ -525,7 +527,7 @@ if /i "%CONFIRM%" neq "YES" (
    echo [%STAMP%] WInst has finished partitioning the system boot drive. >> WInstLOGS.log
 )
 echo Step 2/2: Executing .bat file
-diskpart /s X:\Windows\Temp\%TEMPDIR%/WInstTEMP.txt
+diskpart /s %TEMPDIR%/WInstTEMP.txt
 
 echo Operation complete.
 pause
