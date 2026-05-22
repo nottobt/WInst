@@ -1,6 +1,7 @@
 :: SPDX-License-Identifier: GPL-2.0-or-later
+
 :: Windows Installation Executable
-:: Beta Release 0.6b (Unstable Ver.)
+:: Beta Release 0.6.2.2b (Unstable Ver.)
 
 :: WInst - Windows Installation Executable
 :: Copyright (C) NotToBT 2025, 2026.
@@ -21,27 +22,30 @@
 ::
 
 :: Before executing this program:
-:: WARNING: As this program is still in the Unstable and Beta phase (v0.6b Unstable), you should back up your data before proceeding. Not doing so will have a chance at LOSING your data.
+:: WARNING: As this program is still in the Unstable and Beta phase (v0.6.2.2b Unstable), you should back up your data before proceeding. Not doing so will have a chance at LOSING your data.
 
 @echo off
-title WInst - V0.6b (Unstable)
+title WInst - V0.6.2.2b (Unstable)
 
 :setargs
 IF "%1"=="" GOTO MAINSETUP
-IF /I "%1"=="-help" GOTO help_arg
+IF /I "%1"=="--help" GOTO help_arg
 IF /I "%1"=="/help" GOTO help_arg
 IF /I "%1"=="-h"     GOTO help_arg
-
-:: Value identifier (Commented out because we basically don't have any name identifiers)
-:: IF /I "%1"=="-name" (
-:: 	SET "USER_NAME=%2"
-::	SHIFT
-::	SHIFT
-::      GOTO help_arg
-:: )
+IF /I "%1"=="/WF" GOTO WFCode
+IF /I "%1"=="-WF" GOTO WFCode
+IF /I "%1"=="/WimFile" GOTO WFCode
+IF /I "%1"=="--WimFile" GOTO WFCode
 
 echo Unknown option: %1
 GOTO help_arg
+:WFCode
+SET "WIMPATH=%2"
+SET WFOPT=1
+SHIFT
+SHIFT
+echo Set WIMPATH as "%WIMPATH%".
+GOTO MAINSETUP
 
 ENDLOCAL
 :: NOTE TO DEVELOPER: Finish ASCII improvements.
@@ -102,13 +106,13 @@ if "%ACTIONL:~0,1%"=="Y" (
     echo Logging will be disabled.
     timeout 2 /NOBREAK <nul
     set CONFIRM=NO
-    goto OPTION
+    goto ADTEST
 )
 echo Logging will be enabled.
 timeout 2 /NOBREAK <nul
 echo [%Stamp%] Logging System: Logging has started. > %TEMPDIR%\WinstLOGS.log
 set CONFIRM=YES
-goto OPTION
+goto ADTEST
 
 
 :: ADMIN TEST (PRE-RUN STEP 3)
@@ -117,16 +121,16 @@ for /f "tokens=3" %%i in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control" /v 
 echo %bootOpts% | find /i "MININT" >nul 2>&1
 if %errorlevel% equ 0 (
     echo WInst has detected that the user is currently operating this program in Windows PE.
-    if /i "%CONFIRM%" neq "YES" (
+    if /i "%CONFIRM%" equ "YES" ( 
         echo [%STAMP%] WInst has detected that the user is currently operating this program in Windows PE. >> WInstLOGS.log
     )
-    echo The program will contiue shortly...
+    echo The program will continue shortly...
     timeout 2 /NOBREAK <nul
     cls
     goto OPTION
 ) else (
     echo WInst has detected that the user is currently operating this program in the full version of Windows.
-    if /i "%CONFIRM%" neq "YES" (
+    if /i "%CONFIRM%" equ "YES" ( 
         echo [%STAMP%] WInst has detected that the user is currently operating this program in the full version of Windows. >> WInstLOGS.log
     )
     echo The program will exit in a few moments, as WInst is only intended for use in the Windows PE Environment.
@@ -147,7 +151,7 @@ echo   \__/\  /   ^|___^|^|___^|  / \____/^|__^|
 echo        \/             \/             
 echo.
 pause
-echo Windows Installation Wizard (WInst) Version 0.6 BETA Unstable
+echo Windows Installation Wizard (WInst) Version 0.6.2 BETA Unstable
 echo.
 echo Options:
 echo ----------------------------------------------------------------------------------------------------
@@ -165,7 +169,7 @@ echo.
 set /p ACTION="What action would you choose? "
 if "%ACTION%"=="1" (
     echo Installation process will start in a few seconds. Please stay put.
-    if /i "%CONFIRM%" neq "YES" (
+    if /i "%CONFIRM%" equ "YES" ( 
   	  pause <nul
  	  cls
     ) else (
@@ -180,7 +184,7 @@ if "%ACTION%"=="2" (
     echo Exiting...
     timeout 1 /NOBREAK <nul
     echo Removing processes...
-    if /i "%CONFIRM%" neq "YES" (
+    if /i "%CONFIRM%" equ "YES" ( 
         pause <nul
         exit /b
     ) else (
@@ -192,7 +196,7 @@ if "%ACTION%"=="2" (
 if "%ACTION%"=="3" (
     echo Installation process will start in a bit...
     echo Please be patient. WInst is Generating crucial files.
-    if /i "%CONFIRM%" neq "YES" (
+    if /i "%CONFIRM%" equ "YES" ( 
        timeout 3 /NOBREAK <nul
        cls 
        goto INSTALLACTION3
@@ -221,7 +225,7 @@ if %errorlevel% equ 0 (
     set BOOT_MODE=BIOS
 )
 
-if /i "%CONFIRM%" neq "YES" (
+if /i "%CONFIRM%" equ "YES" ( 
     pause <nul
 ) else (
     echo [%STAMP%] The user has chosen option 3 >> WInstLOGS.log
@@ -238,7 +242,6 @@ goto :PARTCRT
 
 :: Part 2 - Partitioning (Revamped)
 :PARTCRT
-:: "STEP 2: DISK SELECTION & PARTITIONING"
 echo.
 echo ------------------- DISKPART DISK UTILITY -----------------------
 :DPDSS
@@ -266,7 +269,7 @@ set /p CONF1="Confirmation: "
 if /i "%CONF1%" neq "FORMAT" (
     echo.
     echo [ABORT] User cancelled format. As installing without formatting is impossible, The program will exit.
-    if /i "%CONFIRM%" neq "YES" (
+    if /i "%CONFIRM%" equ "YES" ( 
         echo [%STAMP%] The user has cancelled: Formatting. User will be exiting...
     )
     timeout 3 >nul
@@ -277,7 +280,7 @@ cls
 echo Partitioning drive... Please be patient, this will take a long time as formatting a drive takes a long amount of time.
 pause
 
-if /i "%CONFIRM%" neq "YES" (
+if /i "%CONFIRM%" equ "YES" ( 
     echo [%STAMP%] The user has chosen to format, Formatting will begin shortly.
 )
 
@@ -301,7 +304,7 @@ if "%BOOT_MODE%"=="UEFI" (
     echo format quick fs=ntfs label="Windows" >> %TEMPDIR%/WInstTEMP.txt
     echo assign letter="W" >> %TEMPDIR%/WInstTEMP.txt
     echo exit >> %TEMPDIR%/WInstTEMP.txt
-    if /i "%CONFIRM%" neq "YES" (
+    if /i "%CONFIRM%" equ "YES" ( 
         echo [%STAMP%] WInst has finished generating critical files for Step 3. Type: UEFI/GPT partition scheme. >> WInstLOGS.log
     )   
 ) else (
@@ -318,7 +321,7 @@ if "%BOOT_MODE%"=="UEFI" (
     echo format quick fs=ntfs label="Windows" >> %TEMPDIR%/WInstTEMP.txt
     echo assign letter="W" >> %TEMPDIR%/WInstTEMP.txt
     echo exit >> %TEMPDIR%/WInstTEMP.txt
-    if /i "%CONFIRM%" neq "YES" (
+    if /i "%CONFIRM%" equ "YES" ( 
         echo [%STAMP%] WInst has finished generating critical files for Step 3. Type: Legacy BIOS/MBR partition scheme. >> WInstLOGS.log
     )   
 )
@@ -333,7 +336,7 @@ if %errorlevel% neq 0 (
     goto PARTCRT
 )
 cls
-if /i "%CONFIRM%" neq "YES" (
+if /i "%CONFIRM%" equ "YES" ( 
     echo [%STAMP%] WInst has finished partitioning the drive. >> WInstLOGS.log
 )   
 
@@ -344,6 +347,19 @@ echo If you know the place where Windows (the .wim or .esd ones) You should put 
 echo You NEED to put the install.esd in the end of the file. (Example: X:\Example\Example)
 echo WInst will open another instance of cmd to find the .esd file. Navigate using cd and dir.
 echo WInst will attempt to find a install.esd or .wim file in all drives. Please be patient..
+if %WFOPT%=="1" (
+    echo Verifying if the source exists...
+    if exist %WIMPATH% (
+        echo The wimfile that was specified in the arguments was found.
+        echo Skipping wimpath finding step...
+        goto INDEX
+    ) else (
+    echo %WIMPATH% wasn't found.
+    echo Proceeding...
+    goto WIMFIND
+    )
+)
+:WIMFIND
 SET WIMPATH=
 FOR %%i IN (C D E F G H I J K L M N O P Q R S T U V W Y Z) DO (
     IF EXIST "%%i:\sources\install.wim" (
@@ -359,20 +375,20 @@ FOR %%i IN (C D E F G H I J K L M N O P Q R S T U V W Y Z) DO (
 :NOTFOUND
 echo [ERROR] WInst cannot find install.wim or install.esd on any drive.
 pause
-exit
+goto WIMFIND
 
 :FOUND
 echo [SUCCESS] Found image at: %WIMPATH%
 
 echo If it is a valid .esd or .wim file, DISM will identify all the versions. WInst will allow you to choose between multiple versions of Windows.
-  
-dism /Get-ImageInfo /ImageFile:%WIMPATH%
+
 :INDEX
+dism /Get-ImageInfo /ImageFile:%WIMPATH%
 set /p INDEX="Index: "
 if %errorlevel% neq 0 (
     echo Index not found.
     echo Try again.
-    if /i "%CONFIRM%" neq "YES" (
+    if /i "%CONFIRM%" equ "YES" ( 
         echo [%STAMP%] WInst didn't find the index file as "valid". >> WInstLOGS.log
     )    
     echo you will have to reinput the manual directory of the windows installation media file.
@@ -389,7 +405,7 @@ echo Part 3: 1/1: Using DISM to apply the files from the .esd file...
 
 dism /Apply-Image /ImageFile:%WIMPATH% /Index:%INDEX% /ApplyDir:W:\
 
-if /i "%CONFIRM%" neq "YES" (
+if /i "%CONFIRM%" equ "YES" ( 
     echo [%STAMP%] WInst has extracted the contents. If dism returned a error, it couldn't find the file or it ran into a problem. >> WInstLOGS.log
 )    
 cls
@@ -399,14 +415,14 @@ echo This part will initalise the EFI partition. This will take a short amount o
 pause
 bcdboot W:\Windows /s S: /f ALL
 cls
-if /i "%CONFIRM%" neq "YES" (
+if /i "%CONFIRM%" equ "YES" ( 
     echo [%STAMP%] WInst has initalised critical boot configuration files. >> WInstLOGS.log
 )    
 
 :: Part 5: Installation completion
 :SUMMARY
 echo Installation complete.
-if /i "%CONFIRM%" neq "YES" (
+if /i "%CONFIRM%" equ "YES" ( 
    echo [%STAMP%] WInst completed installation successfully. >> WInstLOGS.log
 )
 echo Summary:
@@ -455,7 +471,7 @@ if %errorlevel% equ 0 (
 
 echo The BIOS mode is %BOOT_MODE%.
 echo The program is inserting the boot mode to its database...
-if /i "%CONFIRM%" neq "YES" (
+if /i "%CONFIRM%" equ "YES" ( 
    echo [%STAMP%] WInst has detected the system firmware type as %BOOT_MODE%. >> WInstLOGS.log
 )
 timeout 3 /NOBREAK <nul
@@ -470,9 +486,9 @@ echo Please insert your disk here:
 echo -------------------- DISKPART DISK UTILITY -----------------------
 :: The DiskPart Option
 echo list disk | diskpart
-goto DISKAYS
+goto DISKAYS2
 
-:DISKAYS
+:DISKAYS2
 
 set /p DISK="Target Disk Index (e.g., 0): "
 
@@ -486,7 +502,7 @@ set /p CONF1="Confirmation: "
 if /i "%CONF1%" neq "CONFIRM" (
     echo.
     echo [ABORT] User cancelled format. As installing without formatting is impossible, The program will exit.
-    if /i "%CONFIRM%" neq "YES" (
+    if /i "%CONFIRM%" equ "YES" ( 
         echo [%STAMP%] The user has cancelled: EFI formatting.. User will be exiting...
     )
     timeout 3 >nul
@@ -494,7 +510,7 @@ if /i "%CONF1%" neq "CONFIRM" (
     exit /b
 )
 
-if /i "%CONFIRM%" neq "YES" (
+if /i "%CONFIRM%" equ "YES" ( 
     echo [%STAMP%] The user has chosen disk %SELECTED_MODEL%, Formatting will begin shortly.
 )
 
@@ -523,7 +539,7 @@ if "%BOOT_MODE%"=="UEFI" (
     echo exit >> %TEMPDIR%/WInstTEMP.txt
 )
 
-if /i "%CONFIRM%" neq "YES" (
+if /i "%CONFIRM%" equ "YES" ( 
    echo [%STAMP%] WInst has finished partitioning the system boot drive. >> WInstLOGS.log
 )
 echo Step 2/2: Executing .bat file
@@ -536,11 +552,24 @@ goto WIMAPPLY2
 
 :: Part 3: Windows Image Application
 :WIMAPPLY2
+if %WFOPT%=="1" (
+    echo Verifying if the source exists...
+    if exist %WIMPATH% (
+        echo The wimfile that was specified in the arguments was found.
+        echo Skipping wimpath finding step...
+        goto INDEX2
+    ) else (
+    echo %WIMPATH% wasn't found.
+    echo Proceeding...
+    goto WIMFIND2
+    )
+)
 echo Part 3: Windows IMG Installation
 echo If you know the place where Windows (the .wim or .esd ones) You should put it here.
 echo You NEED to put the install.esd in the end of the file. (Example: X:\Example\Example)
 echo WInst will open another instance of cmd to find the .esd file. Navigate using cd and dir.
 echo WInst will attempt to find a install.esd or .wim file in all drives. Please be patient..
+:WIMFIND2
 SET WIMPATH=
 FOR %%i IN (C D E F G H I J K L M N O P Q R S T U V W Y Z) DO (
     IF EXIST "%%i:\sources\install.wim" (
@@ -563,13 +592,13 @@ echo [SUCCESS] Found image at: %WIMPATH%
 
 echo If it is a valid .esd or .wim file, DISM will identify all the versions. WInst will allow you to choose between multiple versions of Windows.
   
+:INDEX2
 dism /Get-ImageInfo /ImageFile:%WIMPATH%
-:INDEX
 set /p INDEX="Index: "
 if %errorlevel% neq 0 (
     echo Index not found.
     echo Try again.
-    if /i "%CONFIRM%" neq "YES" (
+    if /i "%CONFIRM%" equ "YES" ( 
         echo [%STAMP%] WInst didn't find the index file as "valid". >> WInstLOGS.log
     )    
     echo you will have to reinput the manual directory of the windows installation media file.
@@ -585,19 +614,19 @@ echo Operation complete.
 pause
 cls
 :: Part 4: bcdboot EFI initalisation
-:BCDBTINIT
+:BCDBTINIT2
 echo This part will initalise the EFI partition. This will take a short amount of time.
 pause
 bcdboot W:\Windows /s S: /f ALL
 cls
-if /i "%CONFIRM%" neq "YES" (
+if /i "%CONFIRM%" equ "YES" ( 
     echo [%STAMP%] WInst has initalised critical boot configuration files. >> WInstLOGS.log
 )    
 
 :: Part 5: Installation completion
-:SUMMARY
+:SUMMARY2
 echo Installation complete.
-if /i "%CONFIRM%" neq "YES" (
+if /i "%CONFIRM%" equ "YES" ( 
     echo [%STAMP%] WInst has finished installation. >> WInstLOGS.log
 )    
 echo Summary:
@@ -606,7 +635,7 @@ echo  --------------------- PARITIONING -----------------------
 echo.
 echo Bios type: %BOOT_MODE%
 echo Initialised Partitions:
-if "%BOOT_MODE%"=="UEFI" ( 
+if "%BOO'T_MODE%"=="UEFI" (
     echo EFI Partition, Size 100MB                                        - Formatted
     echo MSR Parition, Size 16MB                                          - Unchanged
     echo Recovery Partition, Size 450MB
@@ -633,5 +662,6 @@ timeout 36 /NOBREAK <nul
 wpeutil reboot
 
 :help_arg
-echo Usage: %~nx0 [-help]
+echo Usage: %~nx0 [--help]
+echo Usage: %~nx0 [--wimfile]
 exit /b
