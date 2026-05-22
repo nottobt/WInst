@@ -1,7 +1,7 @@
 :: SPDX-License-Identifier: GPL-2.0-or-later
 
 :: Windows Installation Executable
-:: Beta Release 0.6.2.2b (Unstable Ver.)
+:: Beta Release 0.6.2b (Unstable Ver.)
 
 :: WInst - Windows Installation Executable
 :: Copyright (C) NotToBT 2025, 2026.
@@ -50,6 +50,8 @@ GOTO MAINSETUP
 ENDLOCAL
 :: NOTE TO DEVELOPER: Finish ASCII improvements.
 :MAINSETUP
+set VERSION="6.0.2b"
+set LICENSE="GPL V2"
 set TEMPDIR="X:\Windows\Temp"
 set ACTION=0
 set BOOT_MODE=0
@@ -69,7 +71,7 @@ set YYYY=%datetime:~0,4%
 set MM=%datetime:~4,2%
 set DD=%datetime:~6,2%
 
-set "HH=%TIME: =0%"
+set "HH=%TIME: =0%""
 set HH=%HH:~0,2%
 set Min=%TIME:~3,2%
 set Sec=%TIME:~6,2%
@@ -225,15 +227,13 @@ if %errorlevel% equ 0 (
     set BOOT_MODE=BIOS
 )
 
-if /i "%CONFIRM%" equ "YES" ( 
-    pause <nul
-) else (
-    echo [%STAMP%] The user has chosen option 3 >> WInstLOGS.log
-    timeout 3 /NOBREAK <nul 
-    cls
-    goto INSTALLACTION3
-)    
-
+if /i "%CONFIRM%" equ "YES" (
+    if %BOOT_MODE%=="UEFI" (
+        echo [%Stamp%] UEFI boot mode detected.
+    ) else (
+        echo [%Stamp%] BIOS (a.k.a Legacy) boot mode detected.
+    )
+)
 echo Detected Boot Mode: %BOOT_MODE%
 echo The installation wizard will continue in %BOOT_MODE%.
 pause
@@ -635,7 +635,7 @@ echo  --------------------- PARITIONING -----------------------
 echo.
 echo Bios type: %BOOT_MODE%
 echo Initialised Partitions:
-if "%BOO'T_MODE%"=="UEFI" (
+if "%BOOT_MODE%"=="UEFI" (
     echo EFI Partition, Size 100MB                                        - Formatted
     echo MSR Parition, Size 16MB                                          - Unchanged
     echo Recovery Partition, Size 450MB
