@@ -25,7 +25,7 @@
 :: WARNING: As this program is still in the Unstable and Beta phase (v0.6.2.2b Unstable), you should back up your data before proceeding. Not doing so will have a chance at LOSING your data.
 
 @echo off
-title WInst - V0.6.2.2b (Unstable)
+title WInst - V0.6.2b (Unstable)
 
 :setargs
 IF "%1"=="" GOTO MAINSETUP
