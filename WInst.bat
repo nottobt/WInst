@@ -1,7 +1,7 @@
 :: SPDX-License-Identifier: GPL-2.0-or-later
 
 :: Windows Installation Executable
-:: Beta Release 0.6.2b (Unstable Ver.)
+:: Beta Release 0.6.2b
 
 :: WInst - Windows Installation Executable
 :: Copyright (C) NotToBT 2025, 2026.
@@ -22,8 +22,9 @@
 ::
 
 :: Before executing this program:
-:: WARNING: As this program is still in the Unstable and Beta phase (v0.6.2.2b Unstable), you should back up your data before proceeding. Not doing so will have a chance at LOSING your data.
-
+:: WARNING: As this program is still in the Unstable and Beta phase (v0.6.2b Unstable), you should back up your data before proceeding. Not doing so will have a chance at LOSING your data.
+:: Source code: ofc <https://github.com/nottobt/WInst>
+:: Latest Update: 07-06-2025 9;45p.m MMT
 @echo off
 title WInst - V0.6.2b (Unstable)
 
@@ -36,6 +37,11 @@ IF /I "%1"=="/WF" GOTO WFCode
 IF /I "%1"=="-WF" GOTO WFCode
 IF /I "%1"=="/WimFile" GOTO WFCode
 IF /I "%1"=="--WimFile" GOTO WFCode
+IF /I "%1"=="--Version" GOTO VERSIONINFO
+IF /I "%1"=="/Version" GOTO VERSIONINFO
+IF /I "%1"=="-V" GOTO VERSIONINFO
+IF /I "%1"=="/V" GOTO VERSIONINFO
+
 
 echo Unknown option: %1
 GOTO help_arg
@@ -50,7 +56,7 @@ GOTO MAINSETUP
 ENDLOCAL
 :: NOTE TO DEVELOPER: Finish ASCII improvements.
 :MAINSETUP
-set VERSION="6.0.2b"
+set VERSION="v6.0.2b"
 set LICENSE="GPL V2"
 set TEMPDIR="X:\Windows\Temp"
 set ACTION=0
@@ -662,6 +668,22 @@ timeout 36 /NOBREAK <nul
 wpeutil reboot
 
 :help_arg
-echo Usage: %~nx0 [--help]
-echo Usage: %~nx0 [--wimfile]
+echo ------------------- Windows Installation Script ---------------------
+echo Help screen
+echo ---------------------------------------------------------------------
+echo [-h] [--help] [/h] - Displays the help screen
+echo {[-wf] [--wimfile] [/wf]} [path-to-WimFile] - Sets the %WIMFILE% variable during main setup
+echo.
+echo Examples:
+echo winst -h
+echo winst -wf "D:/sources/install.wim"
 exit /b
+
+:VERSIONINFO
+echo Windows Installation Executable version V0.6.2b (Unstable)
+echo Windows Batch Script used to install Windows without the restrictions of Microsoft's own installer.
+echo Copyright (c) NotToBT 2025, 2026.
+echo.
+echo "License GPL V2: GNU GPL Version 2 or later <https://gnu.org/licenses/gpl-2.0.en.html>""
+echo This is free software; you are free to change and redistribute it.
+echo There is NO WARRANTY, to the extent permitted by law.
