@@ -16,15 +16,13 @@
 :: MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 :: GNU General Public License for more details.
 ::
-:: You should have received a copy of the GNU General Public License along
-:: with this program; if not, write to the Free Software Foundation, Inc.,
-:: 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-::
-
+:: You should have received a copy of the GNU General Public License
+:: along with this program; if not, see
+:: <https://www.gnu.org/licenses/>.
 :: Before executing this program:
 :: WARNING: As this program is still in the Unstable and Beta phase (v0.6.2b Unstable), you should back up your data before proceeding. Not doing so will have a chance at LOSING your data.
 :: Source code: ofc <https://github.com/nottobt/WInst>
-:: Latest Update: 07-06-2025 9;45p.m MMT
+:: Latest Update: 05-06-2026 6.10p.m MMT
 @echo off
 title WInst - V0.6.2b (Unstable)
 
@@ -671,12 +669,14 @@ wpeutil reboot
 echo ------------------- Windows Installation Script ---------------------
 echo Help screen
 echo ---------------------------------------------------------------------
-echo [-h] [--help] [/h] - Displays the help screen
-echo {[-wf] [--wimfile] [/wf]} [path-to-WimFile] - Sets the %WIMFILE% variable during main setup
+echo "{[-h] [--help] [/h]} - Displays the help screen"
+echo "{[-wf] [--WimFile] [/wf]} [path-to-WimFile] - Sets the %WIMFILE% variable during main setup"
+echo "{[-v] [--Version] [/v]} - Displays the Version screen"
 echo.
 echo Examples:
-echo winst -h
+echo winst --help
 echo winst -wf "D:/sources/install.wim"
+echo winst -v
 exit /b
 
 :VERSIONINFO
