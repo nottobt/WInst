@@ -40,7 +40,6 @@ IF /I "%1"=="/Version" GOTO VERSIONINFO
 IF /I "%1"=="-V" GOTO VERSIONINFO
 IF /I "%1"=="/V" GOTO VERSIONINFO
 
-
 echo Unknown option: %1
 GOTO help_arg
 :WFCode
@@ -68,7 +67,9 @@ set TDF=0
 set Stamp=0
 set ACTIONL=0
 set OPTION=0
-
+set TRUE=0
+set DISKMGMT=0
+set DISKSEL=0
 :: Time Handling (PRE-RUN STEP 1)
 for /f "tokens=2 delims==" %%I in ('wmic os get localdatetime /value') do set "datetime=%%I"
 set YYYY=%datetime:~0,4%
@@ -168,7 +169,7 @@ echo 2. Exit
 echo.
 echo 3. Install Windows without deleting system files
 echo.
-echo 4. In development
+echo 4. Disk Management :: UPCOMING
 echo.
 echo ----------------------------------------------------------------------------------------------------
 echo.
@@ -214,10 +215,55 @@ if "%ACTION%"=="3" (
     cls
     )
 )       
+
+if "%ACTION%"=="4" (
+    echo Starting Disk Management
+    echo This is upcoming. This will exit.
+    exit /b
+)
 echo Choose an option.
 pause
 cls
 goto :OPTION
+
+:DISKMGMT
+:: Unfinished; DO NOT USE THIS.
+if %TRUE%==0 (
+   echo ===========================================================================================
+   echo                           WInst 7.0 Disk Management Utility
+   echo                                         V0.02
+   echo ===========================================================================================
+   findstr /i "sel dis" "%TEMPDIR%\WInstTEMP.txt" >nul
+   if %errorlevel% equ 0 (
+       echo A disk is currently selected.
+       set %DISKSEL%=1
+   ) else (
+       echo No disk is selected.
+   )
+   if %DISKSEL%==0 (
+      echo Choose the disks that you want to choose as the editor.
+      echo Type EXIT to exit the disk utility.
+      echo Type RETURN to return to the start.
+      diskpart /c "list disk"
+      set /p DISKMGMT="Disk: "
+      if /i "%DISKMGMT%"=="EXIT" (
+         echo Exiting Disk Management and returning to main menu.
+         echo Press any key to continue...
+         pause <nul
+         clear
+         goto :OPTION
+      )
+      if /i "%DISKMGMT%"=="EXIT" (
+         echo Returning to start.
+         echo Press any key to continue...
+         pause <nul
+         clear
+         set DISKMGMT=0
+      )
+   )
+   echo Inserting diskpart file into script...
+   echo sel dis %DISKMGMT% > %TEMPDIR%\DISKMGMT.txt
+)   
 
 :INSTALLSTEP1
 :: Step 1: UEFI/BIOS Confirmation
@@ -664,6 +710,9 @@ echo.
 echo Installation complete. The system will reboot in approximately 35 seconds.
 timeout 36 /NOBREAK <nul
 wpeutil reboot
+
+:disk_man
+:: Upcoming
 
 :help_arg
 echo ------------------- Windows Installation Script ---------------------
