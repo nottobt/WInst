@@ -24,7 +24,8 @@
 :: Source code: ofc <https://github.com/nottobt/WInst>
 :: Latest Update: 05-06-2026 6.10p.m MMT
 @echo off
-title WInst - V0.6.2b (Unstable)
+set VERSION="v6.0.2b"
+title WInst - %VERSION% (Unstable)
 
 :setargs
 IF "%1"=="" GOTO MAINSETUP
@@ -39,9 +40,21 @@ IF /I "%1"=="--Version" GOTO VERSIONINFO
 IF /I "%1"=="/Version" GOTO VERSIONINFO
 IF /I "%1"=="-V" GOTO VERSIONINFO
 IF /I "%1"=="/V" GOTO VERSIONINFO
+IF /I "%1"=="-D" GOTO DISKMGMTHDR
+IF /I "%1"=="/D" GOTO DISKMGMTHDR
+IF /I "%1"=="--DiskMgmt" GOTO DISKMGMTHDR
 
-echo Unknown option: %1
-GOTO help_arg
+echo Unknown option: "%1"
+goto help_arg
+
+:DISKMGMTHDR
+SET "DISKMGMTJMP=1"
+SET WFOPT=1
+SHIFT
+SHIFT
+echo Proceeding to main setup...
+GOTO MAINSETUP
+
 :WFCode
 SET "WIMPATH=%2"
 SET WFOPT=1
@@ -53,7 +66,6 @@ GOTO MAINSETUP
 ENDLOCAL
 :: NOTE TO DEVELOPER: Finish ASCII improvements.
 :MAINSETUP
-set VERSION="v6.0.2b"
 set LICENSE="GPL V2"
 set TEMPDIR="X:\Windows\Temp"
 set ACTION=0
@@ -148,7 +160,13 @@ if %errorlevel% equ 0 (
 cls
 
 :OPTION
-
+if %DISKMGMTJMP%==1 (
+   echo Jumping straight to Disk Management.
+   echo Press any key to continue.
+   pause <nul
+   clear
+   echo As this is the beta version, we can't let you in yet.
+)
 echo.
 echo  __      __  .___               __   
 echo /  \    /  \ ^|   ^|  ____    ____/  ^|_ 
@@ -158,7 +176,7 @@ echo   \__/\  /   ^|___^|^|___^|  / \____/^|__^|
 echo        \/             \/             
 echo.
 pause
-echo Windows Installation Wizard (WInst) Version 0.6.2 BETA Unstable
+echo Windows Installation Wizard (WInst) Version %VERSION% BETA Unstable
 echo.
 echo Options:
 echo ----------------------------------------------------------------------------------------------------
@@ -229,9 +247,10 @@ goto :OPTION
 :DISKMGMT
 :: Unfinished; DO NOT USE THIS.
 if %TRUE%==0 (
+   set DMVER="V0.03b"
    echo ===========================================================================================
-   echo                           WInst 7.0 Disk Management Utility
-   echo                                         V0.02
+   echo                           WInst %VERSION% Disk Management Utility
+   echo                                         %DMVER%
    echo ===========================================================================================
    findstr /i "sel dis" "%TEMPDIR%\WInstTEMP.txt" >nul
    if %errorlevel% equ 0 (
@@ -241,7 +260,7 @@ if %TRUE%==0 (
        echo No disk is selected.
    )
    if %DISKSEL%==0 (
-      echo Choose the disks that you want to choose as the editor.
+      echo Type HELP to inquire about what the commands do in the disk management utility.
       echo Type EXIT to exit the disk utility.
       echo Type RETURN to return to the start.
       diskpart /c "list disk"
@@ -253,18 +272,29 @@ if %TRUE%==0 (
          clear
          goto :OPTION
       )
-      if /i "%DISKMGMT%"=="EXIT" (
+      if /i "%DISKMGMT%"=="START" (
          echo Returning to start.
          echo Press any key to continue...
          pause <nul
          clear
          set DISKMGMT=0
       )
+      if /i "%DISKMGMT%"=="HELP" (
+         echo WInst Disk Management utility
+         echo Ver %DMVER%
+         echo "dis [disk index] - Chooses the disk index that you are going to edit."  
+      echo %DISKMGMT%|findstr /r "^[0-9][0-9]*$" >nul
+      if %errorlevel% neq 0 (
+         echo Invalid input! Please enter a number.
+         pause
+         clear
+         goto :DISKMGMT
+      )      
+      echo Inserting diskpart file into script...
+      echo sel dis %DISKMGMT% > %TEMPDIR%\DISKMGMT.txt
    )
-   echo Inserting diskpart file into script...
-   echo sel dis %DISKMGMT% > %TEMPDIR%\DISKMGMT.txt
 )   
-
+   
 :INSTALLSTEP1
 :: Step 1: UEFI/BIOS Confirmation
 
@@ -711,9 +741,6 @@ echo Installation complete. The system will reboot in approximately 35 seconds.
 timeout 36 /NOBREAK <nul
 wpeutil reboot
 
-:disk_man
-:: Upcoming
-
 :help_arg
 echo ------------------- Windows Installation Script ---------------------
 echo Help screen
@@ -721,6 +748,7 @@ echo ---------------------------------------------------------------------
 echo "{[-h] [--help] [/h]} - Displays the help screen"
 echo "{[-wf] [--WimFile] [/wf]} [path-to-WimFile] - Sets the %WIMFILE% variable during main setup"
 echo "{[-v] [--Version] [/v]} - Displays the Version screen"
+echo "{[-d] [--DiskMgmt] [/d]} - Jumps to the Disk Management screen"
 echo.
 echo Examples:
 echo winst --help
