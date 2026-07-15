@@ -52,6 +52,7 @@ SET "DISKMGMTJMP=1"
 SET WFOPT=1
 SHIFT
 SHIFT
+echo Disk Management selected.
 echo Proceeding to main setup...
 GOTO MAINSETUP
 
@@ -166,6 +167,7 @@ if %DISKMGMTJMP%==1 (
    pause <nul
    clear
    echo As this is the beta version, we can't let you in yet.
+   exit /b
 )
 echo.
 echo  __      __  .___               __   
@@ -247,52 +249,69 @@ goto :OPTION
 :DISKMGMT
 :: Unfinished; DO NOT USE THIS.
 if %TRUE%==0 (
-   set DMVER="V0.03b"
+   set DMVER="V0.04b"
    echo ===========================================================================================
    echo                           WInst %VERSION% Disk Management Utility
-   echo                                         %DMVER%
+   echo                                          %DMVER%
    echo ===========================================================================================
-   findstr /i "sel dis" "%TEMPDIR%\WInstTEMP.txt" >nul
-   if %errorlevel% equ 0 (
-       echo A disk is currently selected.
-       set %DISKSEL%=1
-   ) else (
-       echo No disk is selected.
+   echo Type HELP to inquire about what the commands do in the disk management utility.
+   echo Type EXIT to exit the disk utility.
+   echo Type START to return to the start.
+   diskpart list disk
+   set /p DISKMGMT="Disk: "
+   if /i "%DISKMGMT%"=="EXIT" (
+      echo Exiting Disk Management and returning to main menu.
+      echo Press any key to continue...
+      pause <nul
+      cls
+      goto :OPTION
    )
-   if %DISKSEL%==0 (
-      echo Type HELP to inquire about what the commands do in the disk management utility.
-      echo Type EXIT to exit the disk utility.
-      echo Type RETURN to return to the start.
-      diskpart /c "list disk"
-      set /p DISKMGMT="Disk: "
-      if /i "%DISKMGMT%"=="EXIT" (
-         echo Exiting Disk Management and returning to main menu.
-         echo Press any key to continue...
-         pause <nul
-         clear
-         goto :OPTION
-      )
-      if /i "%DISKMGMT%"=="START" (
-         echo Returning to start.
-         echo Press any key to continue...
-         pause <nul
-         clear
-         set DISKMGMT=0
-      )
-      if /i "%DISKMGMT%"=="HELP" (
-         echo WInst Disk Management utility
-         echo Ver %DMVER%
-         echo "dis [disk index] - Chooses the disk index that you are going to edit."  
-      echo %DISKMGMT%|findstr /r "^[0-9][0-9]*$" >nul
-      if %errorlevel% neq 0 (
-         echo Invalid input! Please enter a number.
-         pause
-         clear
-         goto :DISKMGMT
-      )      
-      echo Inserting diskpart file into script...
-      echo sel dis %DISKMGMT% > %TEMPDIR%\DISKMGMT.txt
+   if /i "%DISKMGMT%"=="START" (
+      echo Returning to start.
+      echo Press any key to continue...
+      pause <nul
+      cls
+      set DISKMGMT=0
    )
+   if /i "%DISKMGMT%"=="HELP" (
+      echo WInst Disk Management utility
+      echo Ver %DMVER%
+      echo "dis [disk index] - Chooses the disk index that you are going to edit."
+      echo "lis [par | dis] [index] - Lists the partitions and disks inside or outside the system." 
+   ) 
+   for /f "tokens=1 delims= " %%A in ("%DISKMGMT%") do (
+      set "ACTION=%%A"
+   )
+   for /f "tokens=2 delims= " %%A in ("%DISKMGMT%") do (
+      set "OPTION=%%A"
+   )
+   for /f "tokens=3 delims= " %%A in ("%DISKMGMT%") do (
+      set "OPTION2=%%A"
+   )
+   for /f "tokens=4 delims= " %%A in ("%DISKMGMT%") do (
+      set "OPTION3=%%A"
+   )
+   if /i %ACTION%=="sel" (
+      if /i "%OPTION%"=="dis" ( 
+         echo "You have selected to select disk index: %OPTION3%."
+         echo "Inserting diskpart file into %TEMPDIR%\DISKMGMT.txt..."
+         echo sel dis %OPTION2% > %TEMPDIR%\DISKMGMT.txt
+         echo Going back...
+         goto :DISKMGMT    
+      )
+      if /i "%OPTION%"=="par" (
+         echo "You have selected to select partition: %OPTION2"."
+         echo "Inserting command into diskpart...."
+         echo sel par %OPTION2% > %TEMPDIR%\DISKMGMT.txt
+      )
+      echo Wrong Option.
+      echo Going back...
+      cls
+      goto DISKMGMT
+   )
+   echo Wrong Option. 
+   echo Going back...
+   goto DISKMGMT 
 )   
    
 :INSTALLSTEP1
