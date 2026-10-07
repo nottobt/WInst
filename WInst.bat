@@ -4,7 +4,7 @@
 :: Beta Release 0.6.2b
 
 :: WInst - Windows Installation Executable
-:: Copyright (C) NotToBT 2025, 2026.
+:: Copyright (c) NotToBT 2025, 2026.
 ::
 :: This program is free software; you can redistribute it and/or modify
 :: it under the terms of the GNU General Public License as published by
@@ -19,12 +19,13 @@
 :: You should have received a copy of the GNU General Public License
 :: along with this program; if not, see
 :: <https://www.gnu.org/licenses/>.
+
 :: Before executing this program:
 :: WARNING: As this program is still in the Unstable and Beta phase (v0.6.2b Unstable), you should back up your data before proceeding. Not doing so will have a chance at LOSING your data.
 :: Source code: ofc <https://github.com/nottobt/WInst>
-:: Latest Update: 05-06-2026 6.10p.m MMT
+:: Latest Update: 07-28-2026 3:39p.m MMT
 @echo off
-set VERSION="v6.0.2b"
+set VERSION="v6.0.3b"
 title WInst - %VERSION% (Unstable)
 
 :setargs
@@ -249,7 +250,7 @@ goto :OPTION
 :DISKMGMT
 :: Unfinished; DO NOT USE THIS.
 if %TRUE%==0 (
-   set DMVER="V0.04b"
+   set DMVER="V0.05b"
    echo ===========================================================================================
    echo                           WInst %VERSION% Disk Management Utility
    echo                                          %DMVER%
@@ -276,8 +277,21 @@ if %TRUE%==0 (
    if /i "%DISKMGMT%"=="HELP" (
       echo WInst Disk Management utility
       echo Ver %DMVER%
-      echo "dis [disk index] - Chooses the disk index that you are going to edit."
-      echo "lis [par | dis] [index] - Lists the partitions and disks inside or outside the system." 
+      echo "index = Your disk index that is printed."
+      echo "par = The selected partition."
+      echo "options - Any other options that you want to put."
+      echo "fs - Filesystem that you want to format a system in."
+      echo.
+      echo "dis [index] - Chooses the disk index that you are going to edit."
+      echo "lis [par | dis] [index] - Lists the partitions and disks inside or outside the system."
+      echo "exec - Executes the DiskPart script file you just inputted into the system."
+      echo "format [par] [fs] [options] - Formats the selected partition."
+      echo "clean - Cleans the filesystem by zeroing it out."
+   )
+   if /I "%DISKMGMT%"=="EXEC" (
+      echo Executing Diskpart script...
+      diskpart /c %TEMPDIR%\DISMMGMT.txt
+      echo "Script finished."
    ) 
    for /f "tokens=1 delims= " %%A in ("%DISKMGMT%") do (
       set "ACTION=%%A"
@@ -293,17 +307,34 @@ if %TRUE%==0 (
    )
    if /i %ACTION%=="sel" (
       if /i "%OPTION%"=="dis" ( 
-         echo "You have selected to select disk index: %OPTION3%."
+         echo "You have selected to select a disk."																											to select disk index: %OPTION3%."
          echo "Inserting diskpart file into %TEMPDIR%\DISKMGMT.txt..."
          echo sel dis %OPTION2% > %TEMPDIR%\DISKMGMT.txt
-         echo Going back...
+         echo "Going back..."
          goto :DISKMGMT    
       )
-      if /i "%OPTION%"=="par" (
+      if /i "%ACTION%"=="par" (
          echo "You have selected to select partition: %OPTION2"."
          echo "Inserting command into diskpart...."
          echo sel par %OPTION2% > %TEMPDIR%\DISKMGMT.txt
+         echo "Going back..."
+         goto :DISKMGMT
       )
+   )
+   if /i "%ACTION%"=="format" (
+      echo "You have chosen to format: %OPTION% with filesystem type: %OPTION2% with options: %OPTION3%".
+      echo "Inserting command into diskpart...
+      echo format %OPTION% fs=%OPTION2% %OPTION3% > %TEMPDIR%\DISKMGMT.txt
+      echo "Going back..." 
+      goto :DISKMGMT
+   )
+   if /i "%ACTION%"=="clean" (
+      echo "You have chosen to zero out the whole disk."
+      echo "WARNING: YOU WILL LOSE ALL DATA! THIS IS IRRECOVERABLE! Exit the program if you dont want to."
+      echo clean all > %TEMPDIR%\DISKMGMT.txt
+      echo "Going back..."
+      goto :DISKMGMT
+   }
       echo Wrong Option.
       echo Going back...
       cls
@@ -415,7 +446,7 @@ if "%BOOT_MODE%"=="UEFI" (
     echo create partition primary size=100 >> %TEMPDIR%/WInstTEMP.txt
     echo format quick fs=ntfs label="System" >> %TEMPDIR%/WInstTEMP.txt
     echo active >> %TEMPDIR%/WInstTEMP.txt
-    echo assign letter="S" >> %TEMPDIR%/WInstTEMP.txt
+    echo assign letter="S" >> %TEMPDIR%/WInstTEMP.t-o print-quality=3xt
     echo create partition primary >> %TEMPDIR%/WInstTEMP.txt
     echo format quick fs=ntfs label="Windows" >> %TEMPDIR%/WInstTEMP.txt
     echo assign letter="W" >> %TEMPDIR%/WInstTEMP.txt
