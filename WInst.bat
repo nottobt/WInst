@@ -22,8 +22,7 @@
 
 :: Before executing this program:
 :: WARNING: As this program is still in the Unstable and Beta phase (v0.6.2b Unstable), you should back up your data before proceeding. Not doing so will have a chance at LOSING your data.
-:: Source code: ofc <https://github.com/nottobt/WInst>
-:: Latest Update: 07-28-2026 3:39p.m MMT
+:: Source code: <https://github.com/nottobt/WInst>
 @echo off
 set VERSION="v6.0.3b"
 title WInst - %VERSION% (Unstable)
@@ -446,7 +445,7 @@ if "%BOOT_MODE%"=="UEFI" (
     echo create partition primary size=100 >> %TEMPDIR%/WInstTEMP.txt
     echo format quick fs=ntfs label="System" >> %TEMPDIR%/WInstTEMP.txt
     echo active >> %TEMPDIR%/WInstTEMP.txt
-    echo assign letter="S" >> %TEMPDIR%/WInstTEMP.t-o print-quality=3xt
+    echo assign letter="S" >> %TEMPDIR%/WInstTEMP.txt
     echo create partition primary >> %TEMPDIR%/WInstTEMP.txt
     echo format quick fs=ntfs label="Windows" >> %TEMPDIR%/WInstTEMP.txt
     echo assign letter="W" >> %TEMPDIR%/WInstTEMP.txt
